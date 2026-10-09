@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#7ec8e3">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Дино-парк">
+<title>Дино-парк</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<style>
+:root{--ink:#2b2118;--leaf:#2f8f4e;--orange:#ff8a1f;--sand:#e9c98f;--card:#fffaf0}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;font-family:-apple-system,"SF Pro Rounded","Segoe UI",Roboto,sans-serif;color:var(--ink);-webkit-user-select:none;user-select:none;touch-action:manipulation;background:#7ec8e3}
+button{font:inherit;color:inherit;cursor:pointer;border:0}
+.scr{position:fixed;inset:0}
+.scr[hidden]{display:none}
+/* парк */
+#bg{position:absolute;inset:0;width:100%;height:100%}
+#bg .smoke{animation:smoke 6s linear infinite;transform-box:fill-box;transform-origin:center}
+@keyframes smoke{0%{transform:translateY(0) scale(.6);opacity:.8}100%{transform:translateY(-90px) scale(1.8);opacity:0}}
+#dinos{position:absolute;inset:0}
+.pd{position:absolute;left:0;bottom:0;transform-origin:50% 100%;cursor:pointer}
+.pd svg{display:block;width:100%;height:auto;overflow:visible}
+.pd .flip{transform-origin:50% 100%}
+.pd.walk .leg.a{animation:legA .5s ease-in-out infinite alternate}
+.pd.walk .leg.b{animation:legA .5s ease-in-out infinite alternate-reverse}
+@keyframes legA{from{transform:rotate(-14deg)}to{transform:rotate(14deg)}}
+.pd.walk svg{animation:bob .25s ease-in-out infinite alternate}
+@keyframes bob{to{transform:translateY(-2%)}}
+.pd .wing{animation:flap .5s ease-in-out infinite alternate}
+@keyframes flap{to{transform:scaleY(.35)}}
+.pd.new svg{animation:pop .9s cubic-bezier(.3,1.6,.6,1)}
+@keyframes pop{from{transform:scale(0)}}
+#top{position:absolute;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top) + 10px) 14px 0;text-align:center;pointer-events:none}
+#top h1{margin:0;font-size:clamp(30px,9vw,44px);font-weight:900;color:#fff;letter-spacing:.02em;text-shadow:0 3px 0 #2f8f4e,0 6px 14px rgba(0,0,0,.25)}
+#hello{margin-top:2px;font-weight:800;color:#fff;font-size:17px;text-shadow:0 2px 6px rgba(0,0,0,.35)}
+#count{display:inline-block;margin-top:8px;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,.85);font-weight:900;font-size:16px}
+#digBtn{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 18px);width:min(92vw,420px);display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:26px;
+  background:linear-gradient(180deg,#ffb347,#ff7a1a);color:#fff;font-weight:900;font-size:22px;box-shadow:0 6px 0 #c4520a,0 12px 24px rgba(0,0,0,.25)}
+#digBtn:active{transform:translateX(-50%) translateY(4px);box-shadow:0 2px 0 #c4520a}
+#digBtn .q{width:84px;height:56px;flex:none;display:flex;align-items:flex-end;justify-content:center;background:rgba(255,255,255,.25);border-radius:14px;padding:4px}
+#digBtn .q svg{max-width:100%;max-height:100%;width:auto;height:auto}
+#digBtn small{display:block;font-size:14px;font-weight:700;opacity:.9}
+#sign{position:absolute;right:10px;bottom:calc(env(safe-area-inset-bottom) + 2px);font-size:10px;font-weight:700;color:rgba(255,255,255,.7);letter-spacing:.1em}
+/* раскопки */
+#dig{background:radial-gradient(120% 80% at 50% 40%,#b07a48 0%,#7a4f2c 70%,#5a3920 100%)}
+#digTop{position:absolute;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top) + 10px) 12px 0;display:flex;align-items:center;gap:10px;z-index:3}
+.round{width:48px;height:48px;border-radius:16px;background:rgba(255,255,255,.9);font-size:24px;box-shadow:0 4px 0 rgba(0,0,0,.2);flex:none}
+#digHint{flex:1;color:#fff;font-weight:900;font-size:19px;text-shadow:0 2px 4px rgba(0,0,0,.4)}
+#pit{position:absolute;left:4%;right:4%;top:18%;height:38%;border-radius:28px;background:#8c6239;box-shadow:inset 0 8px 24px rgba(0,0,0,.45);overflow:hidden}
+#fossil{position:absolute;inset:6%;display:flex;align-items:center;justify-content:center}
+#fossil svg{max-width:100%;max-height:100%;width:auto;height:auto;transition:filter .6s}
+#fossil.glow svg{filter:drop-shadow(0 0 14px #fff6c8)}
+#fossil.alive svg{animation:pop .9s cubic-bezier(.3,1.6,.6,1)}
+#sand{position:absolute;inset:0;width:100%;height:100%;touch-action:none;transition:opacity .8s}
+#bar{position:absolute;left:10%;right:10%;top:calc(18% - 22px);height:12px;border-radius:6px;background:rgba(0,0,0,.25);overflow:hidden}
+#bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffe28a,#ffb347);transition:width .2s}
+/* сборка имени */
+#task{position:absolute;left:0;right:0;bottom:0;top:58%;padding:10px 14px calc(env(safe-area-inset-bottom) + 12px);display:flex;flex-direction:column;align-items:center;gap:10px}
+#task[hidden]{display:none}
+#taskTitle{color:#fff;font-weight:900;font-size:20px;text-shadow:0 2px 4px rgba(0,0,0,.4);display:flex;align-items:center;gap:10px}
+#say{width:52px;height:52px;border-radius:50%;background:#fff;font-size:26px;box-shadow:0 4px 0 rgba(0,0,0,.25)}
+#slots{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.slot{min-width:64px;height:58px;padding:0 10px;border-radius:14px;border:3px dashed rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:28px;color:#fff}
+.slot.cur{border-color:#ffe28a;box-shadow:0 0 0 4px rgba(255,226,138,.35)}
+.slot.ok{background:#fff6dc;border:3px solid #ffb347;color:var(--ink)}
+#tiles{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:440px}
+.tile{min-width:76px;height:66px;padding:0 14px;border-radius:18px;background:var(--card);font-weight:900;font-size:30px;box-shadow:0 5px 0 #c9a26a;letter-spacing:.02em}
+.tile:active{transform:translateY(3px);box-shadow:0 2px 0 #c9a26a}
+.tile.used{visibility:hidden}
+.tile.no{animation:no .4s}
+@keyframes no{25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+.tile.hint{animation:hint 1s ease-in-out infinite}
+@keyframes hint{50%{transform:scale(1.12);box-shadow:0 0 0 5px #ffe28a,0 5px 0 #c9a26a}}
+#done{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 20px);padding:0 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
+#done[hidden]{display:none}
+#doneName{font-size:clamp(34px,10vw,50px);font-weight:900;color:#fff;text-shadow:0 3px 0 #c4520a,0 6px 12px rgba(0,0,0,.3)}
+#donePraise{font-size:22px;font-weight:900;color:#ffe28a;text-shadow:0 2px 4px rgba(0,0,0,.4)}
+.go{padding:16px 28px;border-radius:24px;background:linear-gradient(180deg,#5fd36f,#2f8f4e);color:#fff;font-weight:900;font-size:22px;box-shadow:0 6px 0 #1f6234}
+.go:active{transform:translateY(4px);box-shadow:0 2px 0 #1f6234}
+.leaf{position:fixed;pointer-events:none;font-size:26px;z-index:20;animation:fall 2.2s ease-in forwards}
+@keyframes fall{to{transform:translate(var(--dx),110vh) rotate(540deg)}}
+/* карточка динозавра */
+.ovl{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(20,40,20,.45);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.ovl[hidden]{display:none}
+.card{width:min(440px,94vw);max-height:92vh;overflow:auto;border-radius:28px;background:var(--card);padding:16px 18px 18px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+#cPic{height:140px;display:flex;align-items:flex-end;justify-content:center;background:linear-gradient(#d8f0ff,#e9f7d8);border-radius:20px}
+#cPic svg{max-width:96%;max-height:130px;width:auto;height:auto}
+#cName{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin:12px 0 4px}
+#cName button{padding:6px 10px;border-radius:12px;background:#ffe9c2;font-weight:900;font-size:26px}
+#cName .all{background:#ffb347;color:#fff;font-size:22px}
+#cType{font-weight:800;color:#6b5a48;margin:4px 0 8px}
+.fact{display:flex;align-items:center;gap:10px;width:100%;margin:6px 0;padding:10px 12px;border-radius:16px;background:#f3ead8;text-align:left;font-size:19px;font-weight:700;line-height:1.3}
+.fact b{font-size:24px;flex:none}
+.fld{display:block;width:100%;margin:10px 0;padding:14px;border-radius:16px;border:3px solid #e8d6b3;background:#fff;font:inherit;font-size:24px;font-weight:800;text-align:center;-webkit-user-select:text;user-select:text}
+.big{font-size:64px;line-height:1.1}
+h2{margin:6px 0;font-size:26px}
+</style>
+</head>
+<body>
+<div class="scr" id="park">
+  <svg id="bg" viewBox="0 0 400 800" preserveAspectRatio="xMidYMax slice">
+    <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5bb8e8"/><stop offset=".55" stop-color="#bfe8f5"/><stop offset="1" stop-color="#fff2c9"/></linearGradient>
+      <linearGradient id="gr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fd16a"/><stop offset="1" stop-color="#4f9e3a"/></linearGradient></defs>
+    <rect width="400" height="800" fill="url(#sky)"/>
+    <circle cx="320" cy="110" r="40" fill="#fff3a8"/><circle cx="320" cy="110" r="56" fill="#fff3a8" opacity=".35"/>
+    <path d="M0,430 L70,330 L130,400 L200,300 L270,390 L330,320 L400,400 L400,470 L0,470 Z" fill="#9fc5a8"/>
+    <path d="M150,470 L215,330 L240,330 L310,470 Z" fill="#8a6b5a"/><path d="M215,330 L240,330 L232,345 L222,345 Z" fill="#ff7a1a"/>
+    <circle class="smoke" cx="228" cy="320" r="12" fill="#d9d9d9"/><circle class="smoke" cx="232" cy="320" r="10" fill="#e6e6e6" style="animation-delay:-2s"/><circle class="smoke" cx="224" cy="320" r="11" fill="#cfcfcf" style="animation-delay:-4s"/>
+    <rect y="460" width="400" height="340" fill="url(#gr)"/>
+    <ellipse cx="300" cy="520" rx="90" ry="20" fill="#6ec6e6"/><ellipse cx="300" cy="516" rx="70" ry="10" fill="#9be0f5"/>
+    <g fill="#6b4a2b"><path d="M40,560 q6,-80 -4,-130 l8,0 q12,50 4,130 Z"/><path d="M360,600 q-4,-70 8,-120 l8,2 q-12,50 -6,118 Z"/></g>
+    <g fill="#2f8f4e"><path d="M40,432 q-40,-10 -58,14 q34,-14 58,-6 q-30,10 -36,40 q20,-28 38,-34 q10,24 30,30 q-10,-28 -26,-38 q34,-6 54,10 q-16,-24 -60,-16 Z"/>
+      <path d="M372,482 q-40,-10 -58,14 q34,-14 58,-6 q-30,10 -36,40 q20,-28 38,-34 q10,24 30,30 q-10,-28 -26,-38 q34,-6 54,10 q-16,-24 -60,-16 Z"/></g>
+    <g fill="#3e7d2f" opacity=".8"><path d="M120,760 q10,-40 30,-50 q-8,30 -14,50 Z"/><path d="M260,780 q10,-40 30,-50 q-8,30 -14,50 Z"/><path d="M20,720 q10,-40 30,-50 q-8,30 -14,50 Z"/></g>
+  </svg>
+  <div id="dinos"></div>
+  <div id="top"><h1>Дино-парк</h1><div id="hello"></div><div id="count"></div></div>
+  <button id="digBtn"><span class="q" id="digQ"></span><span>🦴 На раскопки<small id="digSub">Кто прячется в земле?</small></span></button>
+  <div id="sign">code-by-Mazinger</div>
+</div>
+
+<div class="scr" id="dig" hidden>
+  <div id="digTop"><button class="round" id="digBack" aria-label="В парк">🌴</button><div id="digHint">Счищай песок пальцем!</div></div>
+  <div id="bar"><i></i></div>
+  <div id="pit"><div id="fossil"></div><canvas id="sand"></canvas></div>
+  <div id="task" hidden>
+    <div id="taskTitle"><button id="say" aria-label="Послушать слог">🔊</button><span>Собери имя!</span></div>
+    <div id="slots"></div>
+    <div id="tiles"></div>
+  </div>
+  <div id="done" hidden>
+    <div id="doneName"></div>
+    <div id="donePraise"></div>
+    <button class="go" id="toPark">В парк! 🌴</button>
+  </div>
+</div>
+
+<div class="ovl" id="card" hidden><div class="card">
+  <div id="cPic"></div>
+  <div id="cName"></div>
+  <div id="cType"></div>
+  <div id="cFacts"></div>
+  <button class="go" id="cClose">Готово</button>
+</div></div>
+
+<div class="ovl" id="hi" hidden><div class="card">
+  <div class="big">🦖</div>
+  <h2>Привет, палеонтолог!</h2>
+  <p style="font-size:19px;font-weight:700">Как тебя зовут?</p>
+  <input class="fld" id="nameIn" maxlength="14" autocomplete="off" placeholder="Имя">
+  <button class="go" id="nameOk">Начать! 🦴</button>
+</div></div>
+
+<script src="data.js"></script>
+<script src="logic.js"></script>
+<script src="dino.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
