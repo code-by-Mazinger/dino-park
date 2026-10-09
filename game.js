@@ -52,13 +52,13 @@ function park(fresh = -1) {
   const b = DL.belt(train); $('belt').innerHTML = `<i style="background:${b.color}"></i>Дино-пояс: ${b.name}` + (b.left ? ` · ещё ${b.left}` : ' 🏆');
   $('egg').innerHTML = eggSVG(DL.cracks(train)); $('egg').classList.toggle('wob', DL.cracks(train) > 0);
   const box = $('dinos'); box.innerHTML = ''; walkers = [];
-  const W = innerWidth, H = innerHeight, k = Math.min(W, 520) / 560;                // пикселей на единицу рисунка
+  const W = innerWidth, H = innerHeight, k = Math.min(W, 520) / 640;                // пикселей на единицу рисунка
   DINOS.slice(0, found).forEach((d, i) => {
     const el = document.createElement('div'), svg = dinoSVG(d), vw = +svg.match(/width="([\d.]+)"/)[1];
-    const flyer = d.look.st === 'fly', lane = flyer ? 0 : i % 3, depth = [0.72, 0.86, 1][lane];
+    const flyer = d.look.st === 'fly', lane = flyer ? 0 : i % 3, depth = [0.6, 0.8, 1][lane];
     el.className = 'pd' + (i === fresh ? ' new' : ''); el.innerHTML = `<div class="flip">${svg}</div>`;
     const w = vw * k * d.scale * depth; el.style.width = w + 'px';
-    const yb = flyer ? H * 0.62 : H * [0.36, 0.25, 0.13][lane] + 70;              // низ рисунка — над нижним краем
+    const yb = flyer ? H * 0.68 : H * [0.335, 0.255, 0.165][lane];                 // ноги — на поляне фона: дальние выше и мельче
     el.style.bottom = yb + 'px'; el.style.zIndex = flyer ? 1 : 10 + lane;
     el.onclick = () => card(d);
     box.appendChild(el);
@@ -67,7 +67,7 @@ function park(fresh = -1) {
   DL.babies(train).forEach((id, i, all) => {                                           // малыши из яйца — маленькие, впереди, прыгают
     const d = DINOS.find(x => x.id === id), el = document.createElement('div'), svg = dinoSVG(d), vw = +svg.match(/width="([\d.]+)"/)[1];
     el.className = 'pd baby' + (fresh === 'baby' && i === all.length - 1 ? ' new' : ''); el.innerHTML = `<div class="flip">${svg}</div>`;
-    const w = vw * k * 0.42; el.style.width = w + 'px'; el.style.bottom = H * 0.13 + 50 + (i % 2) * 14 + 'px'; el.style.zIndex = 14;
+    const w = vw * k * 0.42; el.style.width = w + 'px'; el.style.bottom = H * 0.15 + (i % 2) * 14 + 'px'; el.style.zIndex = 14;
     el.onclick = () => card(d, true); box.appendChild(el);
     walkers.push({ el, w, x: Math.random() * (W - w), dir: Math.random() < 0.5 ? -1 : 1, v: 26 + Math.random() * 14, rest: 0, flyer: false });
   });
@@ -98,6 +98,7 @@ function card(d, baby = false) {
 $('cClose').onclick = () => { $('card').hidden = true; speechSynthesis && speechSynthesis.cancel(); };
 
 // ─── раскопки: счищаешь песок → окаменелость → собираешь имя из слогов → динозавр оживает ───
+const digImg = new Image(); digImg.src = 'dig.jpg';
 let cur = 0, sandCtx = null, brushN = 0, cleared = false, need = [], pos = 0, misses = 0;
 function dig() {
   audio(); cur = found < DINOS.length ? found : Math.floor(Math.random() * DINOS.length);
@@ -106,8 +107,12 @@ function dig() {
   const c = $('sand'), r = c.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1);
   c.width = r.width * dpr; c.height = r.height * dpr; c.style.opacity = 1; c.style.display = '';
   sandCtx = c.getContext('2d'); sandCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  sandCtx.globalCompositeOperation = 'source-over'; sandCtx.fillStyle = '#d9b77c'; sandCtx.fillRect(0, 0, r.width, r.height);
-  for (let i = 0; i < 900; i++) { sandCtx.fillStyle = pick(['#c9a364', '#e6c992', '#b8925a', '#f0d9a8']); sandCtx.fillRect(Math.random() * r.width, Math.random() * r.height, 2 + Math.random() * 3, 2 + Math.random() * 3); }
+  sandCtx.globalCompositeOperation = 'source-over'; sandCtx.fillStyle = '#f2c27f'; sandCtx.fillRect(0, 0, r.width, r.height);
+  if (digImg.complete && digImg.naturalWidth) {                                       // как object-fit: cover — тот же участок, что виден на фоне
+    const k = Math.max(innerWidth / digImg.naturalWidth, innerHeight / digImg.naturalHeight), ox = (innerWidth - digImg.naturalWidth * k) / 2, oy = (innerHeight - digImg.naturalHeight * k) / 2;
+    sandCtx.drawImage(digImg, (r.left - ox) / k, (r.top - oy) / k, r.width / k, r.height / k, 0, 0, r.width, r.height);
+  }
+  for (let i = 0; i < 260; i++) { sandCtx.fillStyle = pick(['rgba(190,140,80,.35)', 'rgba(255,230,180,.4)', 'rgba(160,110,60,.3)']); sandCtx.beginPath(); sandCtx.arc(Math.random() * r.width, Math.random() * r.height, 0.8 + Math.random() * 1.4, 0, 7); sandCtx.fill(); }
   for (let i = 0; i < 14; i++) { sandCtx.fillStyle = pick(['#9b8a75', '#8a7a66', '#a89880']); sandCtx.beginPath(); sandCtx.ellipse(Math.random() * r.width, Math.random() * r.height, 4 + Math.random() * 6, 3 + Math.random() * 4, Math.random() * 3, 0, 7); sandCtx.fill(); }
   cleared = false; brushN = 0; $('bar').firstElementChild.style.width = '0';
   say(found < DINOS.length ? 'Кто-то прячется в земле! Счищай песок.' : 'Раскопай ещё раз!');

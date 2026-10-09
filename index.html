@@ -20,9 +20,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:0}
 .scr{position:fixed;inset:0}
 .scr[hidden]{display:none}
 /* парк */
-#bg{position:absolute;inset:0;width:100%;height:100%}
-#bg .smoke{animation:smoke 6s linear infinite;transform-box:fill-box;transform-origin:center}
-@keyframes smoke{0%{transform:translateY(0) scale(.6);opacity:.8}100%{transform:translateY(-90px) scale(1.8);opacity:0}}
+#bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 100%}
 #dinos{position:absolute;inset:0}
 .pd{position:absolute;left:0;bottom:0;transform-origin:50% 100%;cursor:pointer}
 .pd svg{display:block;width:100%;height:auto;overflow:visible}
@@ -60,20 +58,20 @@ button{font:inherit;color:inherit;cursor:pointer;border:0}
 .toast{position:fixed;left:50%;top:40%;transform:translateX(-50%);z-index:40;padding:14px 18px;border-radius:18px;background:rgba(43,33,24,.9);color:#fff;font-weight:800;font-size:18px;text-align:center;max-width:86vw}
 #sign{position:absolute;right:10px;bottom:calc(env(safe-area-inset-bottom) + 2px);font-size:10px;font-weight:700;color:rgba(255,255,255,.7);letter-spacing:.1em}
 /* раскопки */
-#dig{background:radial-gradient(120% 80% at 50% 40%,#b07a48 0%,#7a4f2c 70%,#5a3920 100%)}
+#dig{background:#e9b77a url(dig.jpg) 50% 50%/cover}
 #digTop{position:absolute;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top) + 10px) 12px 0;display:flex;align-items:center;gap:10px;z-index:3}
 .round{width:48px;height:48px;border-radius:16px;background:rgba(255,255,255,.9);font-size:24px;box-shadow:0 4px 0 rgba(0,0,0,.2);flex:none}
-#digHint{flex:1;color:#fff;font-weight:900;font-size:19px;text-shadow:0 2px 4px rgba(0,0,0,.4)}
-#pit{position:absolute;left:4%;right:4%;top:18%;height:38%;border-radius:28px;background:#8c6239;box-shadow:inset 0 8px 24px rgba(0,0,0,.45);overflow:hidden}
+#digHint{flex:0 1 auto;padding:7px 14px;border-radius:16px;background:rgba(45,28,12,.55);color:#fff;font-weight:900;font-size:19px;text-shadow:0 2px 4px rgba(0,0,0,.4)}
+#pit{position:absolute;left:7%;right:7%;top:25%;height:33%;border-radius:26px;background:radial-gradient(120% 100% at 50% 40%,#c48d52,#9a6a3a);box-shadow:inset 0 10px 26px rgba(70,40,15,.55),0 0 0 3px rgba(255,236,200,.35);overflow:hidden}
 #fossil{position:absolute;inset:6%;display:flex;align-items:center;justify-content:center}
 #fossil svg{max-width:100%;max-height:100%;width:auto;height:auto;transition:filter .6s}
 #fossil.glow svg{filter:drop-shadow(0 0 14px #fff6c8)}
 #fossil.alive svg{animation:pop .9s cubic-bezier(.3,1.6,.6,1)}
 #sand{position:absolute;inset:0;width:100%;height:100%;touch-action:none;transition:opacity .8s}
-#bar{position:absolute;left:10%;right:10%;top:calc(18% - 22px);height:12px;border-radius:6px;background:rgba(0,0,0,.25);overflow:hidden}
+#bar{position:absolute;left:12%;right:12%;top:calc(25% - 22px);height:12px;border-radius:6px;background:rgba(0,0,0,.25);overflow:hidden}
 #bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffe28a,#ffb347);transition:width .2s}
 /* сборка имени */
-#task{position:absolute;left:0;right:0;bottom:0;top:58%;padding:10px 14px calc(env(safe-area-inset-bottom) + 12px);display:flex;flex-direction:column;align-items:center;gap:10px}
+#task{position:absolute;left:0;right:0;bottom:0;top:59%;padding:10px 14px calc(env(safe-area-inset-bottom) + 12px);background:linear-gradient(rgba(45,28,12,0),rgba(45,28,12,.55) 18%);display:flex;flex-direction:column;align-items:center;gap:10px}
 #task[hidden]{display:none}
 #taskTitle{color:#fff;font-weight:900;font-size:20px;text-shadow:0 2px 4px rgba(0,0,0,.4);display:flex;align-items:center;gap:10px}
 #say{width:52px;height:52px;border-radius:50%;background:#fff;font-size:26px;box-shadow:0 4px 0 rgba(0,0,0,.25)}
@@ -89,7 +87,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:0}
 @keyframes no{25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
 .tile.hint{animation:hint 1s ease-in-out infinite}
 @keyframes hint{50%{transform:scale(1.12);box-shadow:0 0 0 5px #ffe28a,0 5px 0 #c9a26a}}
-#done{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 20px);padding:0 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
+#done{position:absolute;left:0;right:0;bottom:0;padding:24px 16px calc(env(safe-area-inset-bottom) + 20px);background:linear-gradient(rgba(45,28,12,0),rgba(45,28,12,.55) 25%);text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
 #done[hidden]{display:none}
 #doneName{font-size:clamp(34px,10vw,50px);font-weight:900;color:#fff;text-shadow:0 3px 0 #c4520a,0 6px 12px rgba(0,0,0,.3)}
 #donePraise{font-size:22px;font-weight:900;color:#ffe28a;text-shadow:0 2px 4px rgba(0,0,0,.4)}
@@ -116,21 +114,7 @@ h2{margin:6px 0;font-size:26px}
 </head>
 <body>
 <div class="scr" id="park">
-  <svg id="bg" viewBox="0 0 400 800" preserveAspectRatio="xMidYMax slice">
-    <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5bb8e8"/><stop offset=".55" stop-color="#bfe8f5"/><stop offset="1" stop-color="#fff2c9"/></linearGradient>
-      <linearGradient id="gr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fd16a"/><stop offset="1" stop-color="#4f9e3a"/></linearGradient></defs>
-    <rect width="400" height="800" fill="url(#sky)"/>
-    <circle cx="320" cy="110" r="40" fill="#fff3a8"/><circle cx="320" cy="110" r="56" fill="#fff3a8" opacity=".35"/>
-    <path d="M0,430 L70,330 L130,400 L200,300 L270,390 L330,320 L400,400 L400,470 L0,470 Z" fill="#9fc5a8"/>
-    <path d="M150,470 L215,330 L240,330 L310,470 Z" fill="#8a6b5a"/><path d="M215,330 L240,330 L232,345 L222,345 Z" fill="#ff7a1a"/>
-    <circle class="smoke" cx="228" cy="320" r="12" fill="#d9d9d9"/><circle class="smoke" cx="232" cy="320" r="10" fill="#e6e6e6" style="animation-delay:-2s"/><circle class="smoke" cx="224" cy="320" r="11" fill="#cfcfcf" style="animation-delay:-4s"/>
-    <rect y="460" width="400" height="340" fill="url(#gr)"/>
-    <ellipse cx="300" cy="520" rx="90" ry="20" fill="#6ec6e6"/><ellipse cx="300" cy="516" rx="70" ry="10" fill="#9be0f5"/>
-    <g fill="#6b4a2b"><path d="M40,560 q6,-80 -4,-130 l8,0 q12,50 4,130 Z"/><path d="M360,600 q-4,-70 8,-120 l8,2 q-12,50 -6,118 Z"/></g>
-    <g fill="#2f8f4e"><path d="M40,432 q-40,-10 -58,14 q34,-14 58,-6 q-30,10 -36,40 q20,-28 38,-34 q10,24 30,30 q-10,-28 -26,-38 q34,-6 54,10 q-16,-24 -60,-16 Z"/>
-      <path d="M372,482 q-40,-10 -58,14 q34,-14 58,-6 q-30,10 -36,40 q20,-28 38,-34 q10,24 30,30 q-10,-28 -26,-38 q34,-6 54,10 q-16,-24 -60,-16 Z"/></g>
-    <g fill="#3e7d2f" opacity=".8"><path d="M120,760 q10,-40 30,-50 q-8,30 -14,50 Z"/><path d="M260,780 q10,-40 30,-50 q-8,30 -14,50 Z"/><path d="M20,720 q10,-40 30,-50 q-8,30 -14,50 Z"/></g>
-  </svg>
+  <img id="bg" src="park.jpg" alt="">
   <div id="dinos"></div>
   <div id="top"><h1>Дино-парк</h1><div id="hello"></div><div id="count"></div><div id="belt"></div></div>
   <div id="sambo"><button id="egg" aria-label="Яйцо динозавра"></button><button id="trainBtn">🥋 Был на самбо!</button></div>
