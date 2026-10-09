@@ -45,7 +45,7 @@ const today = () => new Date().toDateString();
 // ─── парк: динозавры гуляют, птеранодон летает ───
 let walkers = [], last = performance.now();
 function park(fresh = -1) {
-  $('park').hidden = false; $('dig').hidden = true;
+  $('park').hidden = false; $('dig').hidden = true; $('hungry').hidden = $('prof').hidden = true; if (HG) HG.done = true;
   $('hello').textContent = name() ? `Палеонтолог ${name()}` : '';
   $('count').textContent = found >= DINOS.length ? `Все ${DINOS.length} динозавров найдены! 🏆` : `🦕 В парке: ${found} из ${DINOS.length}`;
   const next = DINOS[Math.min(found, DINOS.length - 1)];
@@ -75,6 +75,11 @@ function park(fresh = -1) {
 }
 function step(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (HG && !HG.done && !$('hungry').hidden) {                                      // падающие слоги
+    HG.spawn -= dt; if (HG.spawn <= 0 && HG.cards.length < 4) { spawnCard(); HG.spawn = 1.5; }
+    for (const c of HG.cards) { c.y += c.v * dt; c.el.style.left = c.x + '%'; c.el.style.top = c.y + '%'; if (c.y > 70) c.el.remove(); }
+    HG.cards = HG.cards.filter(c => c.y <= 70);
+  }
   if (!$('park').hidden) for (const a of walkers) {
     if (a.rest > 0) { a.rest -= dt; a.el.classList.remove('walk'); }
     else { a.x += a.dir * a.v * dt; a.el.classList.toggle('walk', !a.flyer);
@@ -207,12 +212,76 @@ function hatch(beltUp) {                                                        
 $('hOk').onclick = () => { $('hatch').hidden = true; speechSynthesis && speechSynthesis.cancel(); park('baby'); };
 $('digBack').onclick = () => { speechSynthesis && speechSynthesis.cancel(); park(); };
 
+// ─── Голодный динозавр: голос говорит слог, сверху падают слоги — накорми динозавра нужным (10 — и он сыт) ───
+let HG = null;
+function hungry() {
+  audio(); const ds = DINOS.slice(0, Math.max(1, found)).filter(d => !d.fly), d = pick(ds.length ? ds : [DINOS[0]]);
+  $('park').hidden = true; $('hungry').hidden = false; $('hDone').hidden = true; $('falls').innerHTML = ''; $('eater').innerHTML = dimg(d);
+  HG = { pool: DL.pool(found), eaten: 0, cards: [], spawn: 0.3, misses: 0, d, done: false, target: '' };
+  nextTarget(); say(`${d.n} проголодался! Корми его слогами. Найди слог: ${HG.target}`, 0.85);
+}
+function nextTarget() { HG.target = pick(HG.pool.filter(x => x !== HG.target)); HG.misses = 0; $('hHint').textContent = ''; $('hScore').textContent = `🍖 ${HG.eaten} из 10`; }
+function spawnCard() {                                                              // нужный слог всегда есть на экране, остальные — похожие соседи
+  const s = !HG.cards.some(c => c.s === HG.target) || Math.random() < 0.3 ? HG.target : pick(HG.pool.filter(x => x !== HG.target));
+  const el = document.createElement('button'), c = { el, s, x: 14 + Math.random() * 72, y: -10, v: 6 + Math.random() * 3 };
+  el.className = 'fc'; el.textContent = s; el.onpointerdown = () => feed(c); $('falls').appendChild(el); HG.cards.push(c);
+}
+function feed(c) {
+  if (c.gone || HG.done) return;
+  if (c.s !== HG.target) { c.el.classList.remove('no'); void c.el.offsetWidth; c.el.classList.add('no'); say(HG.target, 0.7); if (++HG.misses >= 2) $('hHint').textContent = HG.target; return; }
+  c.gone = true; HG.cards = HG.cards.filter(x => x !== c); const e = $('eater').getBoundingClientRect();
+  c.el.classList.add('eat'); c.el.style.left = e.left + e.width * 0.85 + 'px'; c.el.style.top = e.top + e.height * 0.15 + 'px'; setTimeout(() => c.el.remove(), 460);
+  $('eater').classList.remove('chomp'); void $('eater').offsetWidth; $('eater').classList.add('chomp'); noise(0.15, 300, 0.3); tone(523 + HG.eaten * 40, 0.1, 0.3, 0.08);
+  if (++HG.eaten >= 10) return hungryWin();
+  nextTarget(); setTimeout(() => say(pick(['Ам! ', 'Вкусно! ', 'Ням-ням! ']) + 'Теперь: ' + HG.target, 0.85), 300);
+}
+function hungryWin() {
+  HG.done = true; HG.cards.forEach(c => c.el.remove()); HG.cards = []; $('hScore').textContent = '🍖 10 из 10'; roar(); leaves();
+  $('hDoneText').textContent = `${HG.d.n} съел 10 слогов. ${pick(PRAISE)}`; $('hDone').hidden = false; say(`${HG.d.n} наелся! ${pick(PRAISE)}`);
+}
+$('hungryBtn').onclick = hungry; $('hAgain').onclick = hungry;
+$('hSay').onclick = () => HG && say(HG.target, 0.7);
+$('hBack').onclick = $('hHome').onclick = () => { speechSynthesis && speechSynthesis.cancel(); park(); };
+
+// ─── Профессор-путаник: 8 утверждений, половина — его ошибки. Прочитал сам (без 🔊) и ответил верно — звёздочка ───
+let PQ = null;
+const plural = (n, a, b, c) => n % 10 === 1 && n % 100 !== 11 ? a : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? b : c;
+function prof() {
+  audio(); PQ = { q: DL.prof(found), i: 0, caught: 0, right: 0, self: 0, heard: false };
+  $('park').hidden = true; $('prof').hidden = false; $('pDone').hidden = true; showQ();
+  say('Здравствуй, палеонтолог! Я профессор, и я всё путаю. Проверь меня!', 0.9);
+}
+function showQ() {
+  const x = PQ.q[PQ.i]; PQ.heard = false;
+  $('pText').textContent = x.text; $('pDino').innerHTML = dimg(x.d); $('pFace').className = ''; $('pAns').hidden = false; $('pFeed').hidden = true;
+  $('pScore').textContent = `Вопрос ${PQ.i + 1} из ${PQ.q.length} · ⭐ ${PQ.self}`;
+}
+function answer(saysTrue) {
+  const x = PQ.q[PQ.i], ok = saysTrue === x.truth, self = ok && !PQ.heard;
+  if (ok) PQ.right++; if (ok && !x.truth) PQ.caught++; if (self) PQ.self++;
+  const t = ok ? (x.truth ? 'Верно! Ты знаешь динозавров лучше меня!' : `Ой, я перепутал! Ты прав. ${x.d.wrong[1]}`)
+    : (x.truth ? `Нет-нет, это правда! ${x.text}` : `Ха, это была моя ошибка! ${x.d.wrong[1]}`);
+  if (ok && !x.truth) $('pFace').className = 'oops';
+  ok ? chime() : tone(220, 0, 0.35, 0.08);
+  $('pFeedText').textContent = t + (self ? ' ⭐ Ты прочитал сам!' : ''); $('pAns').hidden = true; $('pFeed').hidden = false;
+  $('pScore').textContent = `Вопрос ${PQ.i + 1} из ${PQ.q.length} · ⭐ ${PQ.self}`;
+  say(t + (self ? ' Звёздочка: ты прочитал сам!' : ''), 0.9);
+}
+$('pSay').onclick = () => { PQ.heard = true; say(PQ.q[PQ.i].text, 0.85); };
+$('pYes').onclick = () => answer(true); $('pNo').onclick = () => answer(false);
+$('pNext').onclick = () => { if (++PQ.i < PQ.q.length) showQ(); else {
+  $('pDoneTitle').textContent = `Ты поймал ${PQ.caught} ${plural(PQ.caught, 'ошибку', 'ошибки', 'ошибок')} профессора!`;
+  $('pDoneText').textContent = `Правильных ответов: ${PQ.right} из ${PQ.q.length}. ⭐ Прочитал сам: ${PQ.self}.`; $('pDone').hidden = false; leaves(); roar();
+  say(`Ты поймал ${PQ.caught} ${plural(PQ.caught, 'ошибку', 'ошибки', 'ошибок')}! Спасибо, что учишь профессора!`); } };
+$('profBtn').onclick = prof; $('pAgain').onclick = prof;
+$('pBack').onclick = $('pHome').onclick = () => { speechSynthesis && speechSynthesis.cancel(); park(); };
+
 // ─── первый запуск: имя (хранится только на телефоне) ───
 $('nameOk').onclick = () => { const n = $('nameIn').value.trim().slice(0, 14); ls('dp_name', n); $('hi').hidden = true; audio(); park(); say(`Привет${n ? ', ' + n : ''}! Ты палеонтолог. Пойдём на раскопки!`); };
 park(); if (!ls('dp_name') && ls('dp_name') !== '') $('hi').hidden = false;
 addEventListener('resize', () => { if (!$('park').hidden) park(); });
 requestAnimationFrame(step);
-if (/[?&]debug/.test(location.search)) window.TT = { dig, found3, nameTask, alive, park, cur: () => cur, need: () => need, pos: () => pos, gateA: () => gateA };
+if (/[?&]debug/.test(location.search)) window.TT = { dig, found3, nameTask, alive, park, cur: () => cur, need: () => need, pos: () => pos, gateA: () => gateA, HG: () => HG, PQ: () => PQ };
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   const had = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.register('sw.js').then(reg => document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(() => {}); })).catch(() => {});

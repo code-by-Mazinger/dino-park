@@ -20,5 +20,17 @@ const babies = n => Array.from({ length: Math.floor(n / 3) }, (_, i) => BABIES[i
 const cracks = n => n % 3;
 // Вопрос для взрослых: таблица умножения 6…9 (ребёнку в первом классе не по силам, взрослому — секунда)
 const gate = (r = Math.random) => { const a = 6 + Math.floor(r() * 4), b = 6 + Math.floor(r() * 4); return { q: `${a} × ${b}`, a: a * b }; };
-globalThis.DL = { rng, tiles, extra, belt, babies, cracks, gate, BELTS };
+// Голодный динозавр: слоги из имён найденных динозавров (пока найдено мало — добираем из первых, чтобы было хотя бы 6)
+function pool(found) { let k = Math.max(found, 1), p; do p = [...new Set(DD.DINOS.slice(0, k).flatMap(d => d.syl))]; while (p.length < 6 && ++k <= DD.DINOS.length); return p; }
+// Профессор-путаник: 8 утверждений про найденных динозавров — половина верных (факты), половина — его ошибки
+function prof(found, r = Math.random) {
+  const ds = DD.DINOS.slice(0, Math.max(3, found)), q = [], seen = new Set();
+  const named = (d, t) => t.toLowerCase().includes(d.n.toLowerCase().slice(0, 5)) ? t : `${d.n}: ${t[0].toLowerCase()}${t.slice(1)}`;   // «Он ел…» → «Диплодок: он ел…»
+  for (let i = 0, tries = 0; q.length < 8 && tries < 200; tries++) {                // без повторов
+    const d = ds[Math.floor(r() * ds.length)], truth = q.length % 2 === 0, raw = truth ? d.facts[Math.floor(r() * d.facts.length)] : d.wrong[0];
+    if (seen.has(raw)) continue; seen.add(raw); q.push({ d, truth, raw, text: named(d, raw) });
+  }
+  return shuffle(q, r);
+}
+globalThis.DL = { rng, tiles, extra, belt, babies, cracks, gate, BELTS, pool, prof };
 })();

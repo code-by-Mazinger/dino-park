@@ -56,6 +56,45 @@ button{font:inherit;color:inherit;cursor:pointer;border:0}
 #hPic img{max-height:140px;width:100%;height:auto;object-fit:contain}
 #hPic.crack svg{animation:wob .6s ease-in-out 3}
 .toast{position:fixed;left:50%;top:40%;transform:translateX(-50%);z-index:40;padding:14px 18px;border-radius:18px;background:rgba(43,33,24,.9);color:#fff;font-weight:800;font-size:18px;text-align:center;max-width:86vw}
+#games{position:absolute;right:12px;bottom:calc(env(safe-area-inset-bottom) + 112px);display:flex;gap:8px;z-index:30}
+.gbtn{display:flex;flex-direction:column;align-items:center;gap:2px;width:72px;padding:8px 4px 6px;border-radius:18px;background:#fff;font-weight:900;font-size:12px;box-shadow:0 4px 0 rgba(0,0,0,.2)}
+.gbtn b{font-size:28px;line-height:1}
+.game{background:#7ec8e3 url(park.jpg) 50% 100%/cover}
+.gtop{position:absolute;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top) + 10px) 12px 0;display:flex;align-items:center;justify-content:space-between;gap:10px;z-index:5}
+.gpill{padding:8px 16px;border-radius:999px;background:rgba(255,255,255,.9);font-weight:900;font-size:19px}
+.link{background:none;font-weight:800;font-size:18px;color:#2f8f4e}
+/* голодный динозавр */
+#falls{position:absolute;inset:0;z-index:3;overflow:hidden}
+.fc{position:absolute;min-width:78px;height:64px;padding:0 14px;border-radius:20px;background:#fffaf0;font-weight:900;font-size:30px;display:flex;align-items:center;justify-content:center;box-shadow:0 5px 0 #c9a26a,0 8px 16px rgba(0,0,0,.2);transform:translate(-50%,0)}
+.fc::before{content:"🍃";position:absolute;top:-16px;left:50%;transform:translateX(-50%) rotate(-20deg);font-size:20px}
+.fc.no{animation:no .4s}
+.fc.eat{transition:left .45s ease-in,top .45s ease-in,transform .45s ease-in,opacity .45s;transform:translate(-50%,0) scale(.2);opacity:.2}
+#eater{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 30px);width:min(62vw,300px);transform:translateX(-50%);z-index:2}
+#eater img{width:100%;display:block;transform-origin:70% 90%}
+#eater.chomp img{animation:chomp .35s ease-in-out 2}
+@keyframes chomp{50%{transform:scale(1.08,0.94) rotate(-3deg)}}
+#hHint{position:absolute;left:50%;top:calc(env(safe-area-inset-top) + 70px);transform:translateX(-50%);z-index:4;padding:6px 16px;border-radius:16px;background:rgba(255,226,138,.95);font-weight:900;font-size:28px}
+#hHint:empty{display:none}
+#hDone,#pDone{position:absolute;inset:0;z-index:8;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(20,40,20,.4)}
+#hDone[hidden],#pDone[hidden]{display:none}
+/* профессор */
+#pBox{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top) + 70px);bottom:0;padding:0 14px calc(env(safe-area-inset-bottom) + 14px);display:flex;flex-direction:column;gap:12px;z-index:3}
+#pWho{display:flex;align-items:flex-end;justify-content:space-between}
+#pFace{font-size:88px;line-height:1;filter:drop-shadow(0 4px 6px rgba(0,0,0,.25));transition:transform .3s}
+#pFace.oops{transform:rotate(-12deg) scale(1.1)}
+#pDino{width:55%;max-height:150px;display:flex;justify-content:flex-end}
+#pDino img{max-height:150px;width:auto;max-width:100%}
+.bubble{position:relative;padding:16px 16px 12px;border-radius:24px;background:#fffaf0;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.bubble::before{content:"";position:absolute;left:34px;top:-14px;border:14px solid transparent;border-top:0;border-bottom-color:#fffaf0}
+#pText{font-size:clamp(22px,6.4vw,28px);font-weight:900;line-height:1.3}
+#pSay{margin-top:10px;padding:8px 14px;border-radius:14px;background:#ffe9c2;font-weight:800;font-size:16px}
+#pAns{display:flex;gap:10px;margin-top:auto}
+.ans{flex:1;padding:18px 6px;border-radius:22px;font-weight:900;font-size:22px;color:#fff;box-shadow:0 6px 0 rgba(0,0,0,.25)}
+.ans.yes{background:linear-gradient(#5fd36f,#2f8f4e)}.ans.no{background:linear-gradient(#ff7b6b,#d64535)}
+.ans:active{transform:translateY(4px)}
+#pFeed{margin-top:auto;padding:14px;border-radius:22px;background:rgba(255,250,240,.96);text-align:center}
+#pFeed[hidden]{display:none}
+#pFeedText{font-size:20px;font-weight:800;line-height:1.35;margin-bottom:10px}
 #sign{position:absolute;right:10px;bottom:calc(env(safe-area-inset-bottom) + 2px);font-size:10px;font-weight:700;color:rgba(255,255,255,.7);letter-spacing:.1em}
 /* раскопки */
 #dig{background:#e9b77a url(dig.jpg) 50% 50%/cover}
@@ -117,7 +156,8 @@ h2{margin:6px 0;font-size:26px}
   <img id="bg" src="park.jpg" alt="">
   <div id="dinos"></div>
   <div id="top"><h1>Дино-парк</h1><div id="hello"></div><div id="count"></div><div id="belt"></div></div>
-  <div id="sambo"><button id="egg" aria-label="Яйцо динозавра"></button><button id="trainBtn">🥋 Был на самбо!</button></div>
+  <div id="sambo"><button id="egg" aria-label="Яйцо динозавра"></button><button id="trainBtn">🥋 Самбо</button></div>
+  <div id="games"><button class="gbtn" id="hungryBtn"><b>🍖</b>Голодный</button><button class="gbtn" id="profBtn"><b>🧑‍🔬</b>Профессор</button></div>
   <button id="digBtn"><span class="q" id="digQ"></span><span>🦴 На раскопки<small id="digSub">Кто прячется в земле?</small></span></button>
   <div id="sign">code-by-Mazinger</div>
 </div>
@@ -136,6 +176,25 @@ h2{margin:6px 0;font-size:26px}
     <div id="donePraise"></div>
     <button class="go" id="toPark">В парк! 🌴</button>
   </div>
+</div>
+
+<div class="scr game" id="hungry" hidden>
+  <div class="gtop"><button class="round" id="hBack" aria-label="В парк">🌴</button><div class="gpill" id="hScore"></div><button class="round" id="hSay" aria-label="Послушать слог">🔊</button></div>
+  <div id="hHint"></div>
+  <div id="falls"></div>
+  <div id="eater"></div>
+  <div id="hDone" hidden><div class="card"><div class="big">😋</div><h2>Динозавр наелся!</h2><p id="hDoneText" style="font-size:19px;font-weight:700"></p><button class="go" id="hAgain">Ещё раз</button><p><button class="link" id="hHome">В парк 🌴</button></p></div></div>
+</div>
+
+<div class="scr game" id="prof" hidden>
+  <div class="gtop"><button class="round" id="pBack" aria-label="В парк">🌴</button><div class="gpill" id="pScore"></div></div>
+  <div id="pBox">
+    <div id="pWho"><span id="pFace">🧑‍🔬</span><div id="pDino"></div></div>
+    <div class="bubble"><div id="pText"></div><button id="pSay">🔊 Послушать</button></div>
+    <div id="pAns"><button class="ans yes" id="pYes">✅ Верно</button><button class="ans no" id="pNo">❌ Ошибка!</button></div>
+    <div id="pFeed" hidden><div id="pFeedText"></div><button class="go" id="pNext">Дальше ▶</button></div>
+  </div>
+  <div id="pDone" hidden><div class="card"><div class="big">🎓</div><h2 id="pDoneTitle"></h2><p id="pDoneText" style="font-size:19px;font-weight:700"></p><button class="go" id="pAgain">Ещё раз</button><p><button class="link" id="pHome">В парк 🌴</button></p></div></div>
 </div>
 
 <div class="ovl" id="card" hidden><div class="card">

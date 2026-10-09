@@ -7,6 +7,7 @@ assert.strictEqual(new Set(DINOS.map(d => d.id)).size, DINOS.length, 'id без 
 for (const [k, d] of DINOS.entries()) {
   assert.strictEqual(d.syl.join('').toLowerCase(), d.n.toLowerCase(), d.n + ': слоги = имя');
   assert(d.facts.length >= 3 && d.facts.every(f => f.length < 90), d.n + ': три коротких факта');
+  assert(d.wrong.length === 2 && d.wrong.every(t => t.length < 90) && !d.facts.includes(d.wrong[0]), d.n + ': ошибка профессора и поправка');
   assert(['plants', 'meat', 'fish'].includes(d.diet) && ['юрский', 'меловой'].includes(d.period));
   for (let s = 1; s <= 20; s++) {
     const t = DL.tiles(k, DL.rng(s));
@@ -27,4 +28,11 @@ assert.strictEqual(DL.cracks(4), 1);
 assert(DL.babies(15).every(id => DINOS.some(d => d.id === id)), 'малыши — известные виды');
 for (let s = 1; s < 30; s++) { const g = DL.gate(DL.rng(s)); const [a, b] = g.q.split(' × ').map(Number); assert(a >= 6 && a <= 9 && b >= 6 && b <= 9 && g.a === a * b); }
 for (const d of DINOS) assert(require('fs').existsSync(__dirname + '/dinos/' + d.id + '.webp'), d.n + ': есть картинка');
+// мини-игры: слоги — из имён найденных (не меньше 6), профессор — 8 вопросов только про найденных, верные и ошибки вперемешку
+assert.deepStrictEqual(DL.pool(3), [...new Set(DINOS.slice(0, 3).flatMap(d => d.syl))]);
+assert(DL.pool(0).length >= 6 && DL.pool(1).length >= 6);
+for (let s = 1; s < 20; s++) { const q = DL.prof(5, DL.rng(s)); assert.strictEqual(q.length, 8);
+  assert(q.every(x => DINOS.indexOf(x.d) < 5) && q.some(x => x.truth) && q.some(x => !x.truth));
+  assert(q.every(x => x.truth ? x.d.facts.includes(x.raw) : x.d.wrong[0] === x.raw) && new Set(q.map(x => x.raw)).size === 8, 'без повторов');
+  assert(q.every(x => x.text.toLowerCase().includes(x.d.n.toLowerCase().slice(0, 5))), 'в каждой фразе понятно, о ком'); }
 console.log('ВСЁ ОК');
