@@ -6,6 +6,8 @@ const ls = (k, v) => { try { return v === undefined ? localStorage.getItem(k) : 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 const pick = a => a[Math.floor(Math.random() * a.length)];
 const { DINOS, PRAISE } = DD;
+// Рисунки динозавров — из нейросети (dinos/*.webp, вырезаны из одного листа); окаменелость и силуэт — фильтром той же картинки
+const dimg = (d, mode = 'color') => `<img class="di ${mode}" src="dinos/${d.id}.webp" alt="${d.n}" draggable="false">`;
 
 // ─── голос: русский голос телефона, медленно и чётко ───
 let voice = null;
@@ -47,17 +49,16 @@ function park(fresh = -1) {
   $('hello').textContent = name() ? `Палеонтолог ${name()}` : '';
   $('count').textContent = found >= DINOS.length ? `Все ${DINOS.length} динозавров найдены! 🏆` : `🦕 В парке: ${found} из ${DINOS.length}`;
   const next = DINOS[Math.min(found, DINOS.length - 1)];
-  $('digQ').innerHTML = found < DINOS.length ? dinoSVG(next, 'shadow') : '🏆';
+  $('digQ').innerHTML = found < DINOS.length ? dimg(next, 'shadow') : '🏆';
   $('digSub').textContent = found < DINOS.length ? 'Кто прячется в земле?' : 'Раскопать ещё раз';
   const b = DL.belt(train); $('belt').innerHTML = `<i style="background:${b.color}"></i>Дино-пояс: ${b.name}` + (b.left ? ` · ещё ${b.left}` : ' 🏆');
   $('egg').innerHTML = eggSVG(DL.cracks(train)); $('egg').classList.toggle('wob', DL.cracks(train) > 0);
   const box = $('dinos'); box.innerHTML = ''; walkers = [];
-  const W = innerWidth, H = innerHeight, k = Math.min(W, 520) / 640;                // пикселей на единицу рисунка
+  const W = innerWidth, H = innerHeight, k = Math.min(W, 520);                      // ширина «обычного» динозавра — доля этой величины
   DINOS.slice(0, found).forEach((d, i) => {
-    const el = document.createElement('div'), svg = dinoSVG(d), vw = +svg.match(/width="([\d.]+)"/)[1];
-    const flyer = d.look.st === 'fly', lane = flyer ? 0 : i % 3, depth = [0.6, 0.8, 1][lane];
-    el.className = 'pd' + (i === fresh ? ' new' : ''); el.innerHTML = `<div class="flip">${svg}</div>`;
-    const w = vw * k * d.scale * depth; el.style.width = w + 'px';
+    const el = document.createElement('div'), flyer = d.fly, lane = flyer ? 0 : i % 3, depth = [0.6, 0.8, 1][lane];
+    el.className = 'pd' + (flyer ? ' fly' : '') + (i === fresh ? ' new' : ''); el.innerHTML = `<div class="flip">${dimg(d)}</div>`;
+    const w = k * 0.34 * d.scale * depth; el.style.width = w + 'px';
     const yb = flyer ? H * 0.68 : H * [0.335, 0.255, 0.165][lane];                 // ноги — на поляне фона: дальние выше и мельче
     el.style.bottom = yb + 'px'; el.style.zIndex = flyer ? 1 : 10 + lane;
     el.onclick = () => card(d);
@@ -65,9 +66,9 @@ function park(fresh = -1) {
     walkers.push({ el, w, x: i === fresh ? W * 0.6 : Math.random() * (W - w), dir: Math.random() < 0.5 ? -1 : 1, v: (flyer ? 60 : 18 + Math.random() * 16) * depth, rest: 0, flyer });
   });
   DL.babies(train).forEach((id, i, all) => {                                           // малыши из яйца — маленькие, впереди, прыгают
-    const d = DINOS.find(x => x.id === id), el = document.createElement('div'), svg = dinoSVG(d), vw = +svg.match(/width="([\d.]+)"/)[1];
-    el.className = 'pd baby' + (fresh === 'baby' && i === all.length - 1 ? ' new' : ''); el.innerHTML = `<div class="flip">${svg}</div>`;
-    const w = vw * k * 0.42; el.style.width = w + 'px'; el.style.bottom = H * 0.15 + (i % 2) * 14 + 'px'; el.style.zIndex = 14;
+    const d = DINOS.find(x => x.id === id), el = document.createElement('div');
+    el.className = 'pd baby' + (fresh === 'baby' && i === all.length - 1 ? ' new' : ''); el.innerHTML = `<div class="flip">${dimg(d)}</div>`;
+    const w = k * 0.15; el.style.width = w + 'px'; el.style.bottom = H * 0.15 + (i % 2) * 14 + 'px'; el.style.zIndex = 14;
     el.onclick = () => card(d, true); box.appendChild(el);
     walkers.push({ el, w, x: Math.random() * (W - w), dir: Math.random() < 0.5 ? -1 : 1, v: 26 + Math.random() * 14, rest: 0, flyer: false });
   });
@@ -86,7 +87,7 @@ function step(now) {
 
 // ─── карточка динозавра: имя по слогам (нажми — услышишь), факты голосом ───
 function card(d, baby = false) {
-  audio(); $('cPic').innerHTML = dinoSVG(d);
+  audio(); $('cPic').innerHTML = dimg(d);
   $('cName').innerHTML = d.syl.map(s => `<button data-s="${s}">${s}</button>`).join('') + `<button class="all" data-all="1">🔊</button>`;
   $('cType').textContent = (d.kind ? d.kind + ' · ' : '') + { plants: 'Ел растения 🌿', meat: 'Хищник 🍖', fish: 'Ел рыбу 🐟' }[d.diet] + ` · жил в ${{ юрский: 'юрском', меловой: 'меловом' }[d.period]} периоде`;
   $('cFacts').innerHTML = d.facts.map((f, i) => `<button class="fact" data-f="${i}"><b>🔊</b>${esc(f)}</button>`).join('');
@@ -103,7 +104,7 @@ let cur = 0, sandCtx = null, brushN = 0, cleared = false, need = [], pos = 0, mi
 function dig() {
   audio(); cur = found < DINOS.length ? found : Math.floor(Math.random() * DINOS.length);
   const d = DINOS[cur]; $('park').hidden = true; $('dig').hidden = false; $('task').hidden = true; $('done').hidden = true;
-  $('fossil').className = ''; $('fossil').innerHTML = dinoSVG(d, 'fossil'); $('digHint').textContent = 'Счищай песок пальцем!'; $('bar').style.display = '';
+  $('fossil').className = ''; $('fossil').innerHTML = dimg(d, 'fossil'); $('digHint').textContent = 'Счищай песок пальцем!'; $('bar').style.display = '';
   const c = $('sand'), r = c.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1);
   c.width = r.width * dpr; c.height = r.height * dpr; c.style.opacity = 1; c.style.display = '';
   sandCtx = c.getContext('2d'); sandCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -157,7 +158,7 @@ $('tiles').onclick = e => {
 };
 function alive() {
   const d = DINOS[cur], isNew = cur === found && found < DINOS.length;
-  $('task').hidden = true; $('fossil').className = 'alive'; $('fossil').innerHTML = dinoSVG(d);
+  $('task').hidden = true; $('fossil').className = 'alive'; $('fossil').innerHTML = dimg(d);
   roar(); setTimeout(() => say(d.n + '! ' + pick(PRAISE)), 700);
   $('doneName').textContent = d.n; $('donePraise').textContent = isNew ? `Новый динозавр в парке! ${pick(PRAISE)}` : pick(PRAISE); $('done').hidden = false; $('digHint').textContent = '';
   leaves();
@@ -198,7 +199,7 @@ function hatch(beltUp) {                                                        
   $('hPic').innerHTML = eggSVG(2); $('hPic').className = 'crack'; $('hTitle').textContent = 'Яйцо вылупляется…'; $('hText').textContent = ''; $('hOk').hidden = true; $('hatch').hidden = false;
   say('Ой! Кто-то вылупляется!'); noise(0.3, 3000, 0.2, 0.6); noise(0.3, 2500, 0.2, 1.2);
   setTimeout(() => {
-    $('hPic').className = ''; $('hPic').innerHTML = `<div style="position:relative;width:70%">${dinoSVG(d).replace('<svg ', '<svg style="width:100%;height:auto" ')}</div>`;
+    $('hPic').className = ''; $('hPic').innerHTML = `<div style="width:62%">${dimg(d)}</div>`;
     $('hTitle').textContent = `Малыш ${d.n.toLowerCase()}а!`; $('hText').textContent = `Он вылупился, потому что ты ходил на самбо! 🥋${beltUp}`; $('hOk').hidden = false;
     roar(); chime(4); leaves(); say(`Ура! Вылупился малыш ${d.n.toLowerCase()}а!${beltUp}`);
   }, 2000);

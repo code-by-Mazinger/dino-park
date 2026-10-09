@@ -23,16 +23,16 @@ button{font:inherit;color:inherit;cursor:pointer;border:0}
 #bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 100%}
 #dinos{position:absolute;inset:0}
 .pd{position:absolute;left:0;bottom:0;transform-origin:50% 100%;cursor:pointer}
-.pd svg{display:block;width:100%;height:auto;overflow:visible}
+.pd img,.di{display:block;width:100%;height:auto;-webkit-user-drag:none;pointer-events:none}
+.pd{-webkit-touch-callout:none}
 .pd .flip{transform-origin:50% 100%}
-.pd.walk .leg.a{animation:legA .5s ease-in-out infinite alternate}
-.pd.walk .leg.b{animation:legA .5s ease-in-out infinite alternate-reverse}
-@keyframes legA{from{transform:rotate(-14deg)}to{transform:rotate(14deg)}}
-.pd.walk svg{animation:bob .25s ease-in-out infinite alternate}
-@keyframes bob{to{transform:translateY(-2%)}}
-.pd .wing{animation:flap .5s ease-in-out infinite alternate}
-@keyframes flap{to{transform:scaleY(.35)}}
-.pd.new svg{animation:pop .9s cubic-bezier(.3,1.6,.6,1)}
+.pd.walk img{transform-origin:50% 100%;animation:waddle .42s ease-in-out infinite alternate}
+@keyframes waddle{from{transform:rotate(-1.6deg) translateY(0)}to{transform:rotate(1.6deg) translateY(-3%)}}
+.pd.fly img{animation:glide 1.4s ease-in-out infinite alternate}
+@keyframes glide{from{transform:translateY(0) rotate(-2deg)}to{transform:translateY(-14%) rotate(2deg)}}
+.di.fossil{filter:grayscale(1) sepia(.35) brightness(1.5) contrast(.75) drop-shadow(0 2px 2px rgba(80,50,20,.5))}
+.di.shadow{filter:brightness(0) opacity(.78)}
+.pd.new .flip{animation:pop .9s cubic-bezier(.3,1.6,.6,1)}
 @keyframes pop{from{transform:scale(0)}}
 #top{position:absolute;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top) + 10px) 14px 0;text-align:center;pointer-events:none}
 #top h1{margin:0;font-size:clamp(30px,9vw,44px);font-weight:900;color:#fff;letter-spacing:.02em;text-shadow:0 3px 0 #2f8f4e,0 6px 14px rgba(0,0,0,.25)}
@@ -42,7 +42,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:0}
   background:linear-gradient(180deg,#ffb347,#ff7a1a);color:#fff;font-weight:900;font-size:22px;box-shadow:0 6px 0 #c4520a,0 12px 24px rgba(0,0,0,.25)}
 #digBtn:active{transform:translateX(-50%) translateY(4px);box-shadow:0 2px 0 #c4520a}
 #digBtn .q{width:84px;height:56px;flex:none;display:flex;align-items:flex-end;justify-content:center;background:rgba(255,255,255,.25);border-radius:14px;padding:4px}
-#digBtn .q svg{max-width:100%;max-height:100%;width:auto;height:auto}
+#digBtn .q img{max-width:100%;max-height:100%;width:auto;height:auto}
 #digBtn small{display:block;font-size:14px;font-weight:700;opacity:.9}
 #belt{display:inline-flex;align-items:center;gap:8px;margin-top:6px;padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.85);font-weight:800;font-size:14px}
 #belt i{width:34px;height:10px;border-radius:3px;border:1.5px solid rgba(0,0,0,.35)}
@@ -53,7 +53,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:0}
 @keyframes wob{0%,80%,100%{transform:rotate(0)}85%{transform:rotate(-8deg)}90%{transform:rotate(7deg)}95%{transform:rotate(-4deg)}}
 #trainBtn{padding:10px 14px;border-radius:18px;background:#fff;font-weight:900;font-size:16px;box-shadow:0 4px 0 rgba(0,0,0,.2);margin-bottom:6px}
 #hPic{height:150px;display:flex;align-items:flex-end;justify-content:center;background:linear-gradient(#fff3d6,#e9f7d8);border-radius:20px}
-#hPic svg{max-height:140px;max-width:90%;width:auto;height:auto}
+#hPic img{max-height:140px;width:100%;height:auto;object-fit:contain}
 #hPic.crack svg{animation:wob .6s ease-in-out 3}
 .toast{position:fixed;left:50%;top:40%;transform:translateX(-50%);z-index:40;padding:14px 18px;border-radius:18px;background:rgba(43,33,24,.9);color:#fff;font-weight:800;font-size:18px;text-align:center;max-width:86vw}
 #sign{position:absolute;right:10px;bottom:calc(env(safe-area-inset-bottom) + 2px);font-size:10px;font-weight:700;color:rgba(255,255,255,.7);letter-spacing:.1em}
@@ -64,9 +64,9 @@ button{font:inherit;color:inherit;cursor:pointer;border:0}
 #digHint{flex:0 1 auto;padding:7px 14px;border-radius:16px;background:rgba(45,28,12,.55);color:#fff;font-weight:900;font-size:19px;text-shadow:0 2px 4px rgba(0,0,0,.4)}
 #pit{position:absolute;left:7%;right:7%;top:25%;height:33%;border-radius:26px;background:radial-gradient(120% 100% at 50% 40%,#c48d52,#9a6a3a);box-shadow:inset 0 10px 26px rgba(70,40,15,.55),0 0 0 3px rgba(255,236,200,.35);overflow:hidden}
 #fossil{position:absolute;inset:6%;display:flex;align-items:center;justify-content:center}
-#fossil svg{max-width:100%;max-height:100%;width:auto;height:auto;transition:filter .6s}
-#fossil.glow svg{filter:drop-shadow(0 0 14px #fff6c8)}
-#fossil.alive svg{animation:pop .9s cubic-bezier(.3,1.6,.6,1)}
+#fossil img{max-width:100%;max-height:100%;width:auto;height:auto;transition:filter .6s}
+#fossil.glow img{filter:grayscale(1) sepia(.35) brightness(1.5) contrast(.75) drop-shadow(0 0 14px #fff6c8)}
+#fossil.alive img{animation:pop .9s cubic-bezier(.3,1.6,.6,1)}
 #sand{position:absolute;inset:0;width:100%;height:100%;touch-action:none;transition:opacity .8s}
 #bar{position:absolute;left:12%;right:12%;top:calc(25% - 22px);height:12px;border-radius:6px;background:rgba(0,0,0,.25);overflow:hidden}
 #bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffe28a,#ffb347);transition:width .2s}
@@ -100,7 +100,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:0}
 .ovl[hidden]{display:none}
 .card{width:min(440px,94vw);max-height:92vh;overflow:auto;border-radius:28px;background:var(--card);padding:16px 18px 18px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.35)}
 #cPic{height:140px;display:flex;align-items:flex-end;justify-content:center;background:linear-gradient(#d8f0ff,#e9f7d8);border-radius:20px}
-#cPic svg{max-width:96%;max-height:130px;width:auto;height:auto}
+#cPic img{max-width:96%;max-height:130px;width:auto;height:auto}
 #cName{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin:12px 0 4px}
 #cName button{padding:6px 10px;border-radius:12px;background:#ffe9c2;font-weight:900;font-size:26px}
 #cName .all{background:#ffb347;color:#fff;font-size:22px}
@@ -173,7 +173,6 @@ h2{margin:6px 0;font-size:26px}
 
 <script src="data.js"></script>
 <script src="logic.js"></script>
-<script src="dino.js"></script>
 <script src="game.js"></script>
 </body>
 </html>

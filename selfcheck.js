@@ -26,4 +26,5 @@ assert.deepStrictEqual(DL.babies(2), []); assert.deepStrictEqual(DL.babies(3), [
 assert.strictEqual(DL.cracks(4), 1);
 assert(DL.babies(15).every(id => DINOS.some(d => d.id === id)), 'малыши — известные виды');
 for (let s = 1; s < 30; s++) { const g = DL.gate(DL.rng(s)); const [a, b] = g.q.split(' × ').map(Number); assert(a >= 6 && a <= 9 && b >= 6 && b <= 9 && g.a === a * b); }
+for (const d of DINOS) assert(require('fs').existsSync(__dirname + '/dinos/' + d.id + '.webp'), d.n + ': есть картинка');
 console.log('ВСЁ ОК');
