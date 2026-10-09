@@ -49,7 +49,7 @@ function park(fresh = -1) {
   const next = DINOS[Math.min(found, DINOS.length - 1)];
   $('digQ').innerHTML = found < DINOS.length ? dinoSVG(next, 'shadow') : '🏆';
   $('digSub').textContent = found < DINOS.length ? 'Кто прячется в земле?' : 'Раскопать ещё раз';
-  const b = DL.belt(train); $('belt').innerHTML = `<i style="background:${b.color}"></i>Дино-пояс: ${b.name}` + (b.left ? ` · до «${b.nextName}» ${b.left}` : ' 🏆');
+  const b = DL.belt(train); $('belt').innerHTML = `<i style="background:${b.color}"></i>Дино-пояс: ${b.name}` + (b.left ? ` · ещё ${b.left}` : ' 🏆');
   $('egg').innerHTML = eggSVG(DL.cracks(train)); $('egg').classList.toggle('wob', DL.cracks(train) > 0);
   const box = $('dinos'); box.innerHTML = ''; walkers = [];
   const W = innerWidth, H = innerHeight, k = Math.min(W, 520) / 560;                // пикселей на единицу рисунка

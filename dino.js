@@ -3,17 +3,23 @@
 // mode: color — живой, fossil — окаменелость (кость с рёбрами), shadow — силуэт ещё не найденного.
 (() => {
 const rad = a => a * Math.PI / 180;
+const tint = (h, k) => '#' + h.slice(1).match(/\w\w/g).map(x => { const v = parseInt(x, 16); return Math.round(k < 0 ? v * (1 + k) : v + (255 - v) * k).toString(16).padStart(2, '0'); }).join('');
 function dinoSVG(d, mode = 'color') {
   const L = d.look, P = [];
   let [c1, c2, c3] = L.c, ln = 'none', lw = 0;
   if (mode === 'fossil') { c1 = '#efe3c8'; c2 = '#d6c39c'; c3 = '#e6d6b2'; ln = '#a8915f'; lw = 2; }
   if (mode === 'shadow') { c1 = c2 = c3 = '#2f2a45'; }
-  const S = (fill = c1) => `fill="${fill}" stroke="${ln}" stroke-width="${lw}"`;
-  if (L.st === 'fly') return fly(L, c1, c2, c3, S, mode);
+  const col = mode === 'color', id = d.id + (L.st === 'fly' ? 'f' : '');
+  const S = (fill = c1) => `fill="${col && fill === c1 ? `url(#a${id})` : col && fill === c2 ? `url(#b${id})` : fill}" stroke="${ln}" stroke-width="${lw}"`;   // объём: свет сверху
+  const defs = col ? `<defs><linearGradient id="a${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${tint(c1, 0.32)}"/><stop offset=".55" stop-color="${c1}"/><stop offset="1" stop-color="${tint(c1, -0.18)}"/></linearGradient>`
+    + `<linearGradient id="b${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${tint(c2, 0.15)}"/><stop offset="1" stop-color="${tint(c2, -0.25)}"/></linearGradient>`
+    + `<radialGradient id="s${id}"><stop offset="0" stop-color="rgba(0,0,0,.32)"/><stop offset="1" stop-color="rgba(0,0,0,0)"/></radialGradient></defs>` : '';
+  P.push(defs);
+  if (L.st === 'fly') return fly(L, c1, c2, c3, S, mode, defs);
   const [rx, ry, by] = L.body, biped = L.st === 'biped', bx = 120 + ((rx + L.tail[0]) - (rx * 0.7 + L.neck[0] * Math.cos(L.neck[1] * Math.PI / 180) + L.head * 1.5)) / 2, th = biped ? -10 : (L.front ? (L.front - 1) * -40 : 0);
   const cs = Math.cos(rad(th)), sn = Math.sin(rad(th));
   const at = (k, dy = 0) => [bx + rx * k * cs, by + rx * k * sn + dy];                // точка на оси тела (k = −1…1)
-  if (mode !== 'shadow') P.push(`<ellipse cx="${bx}" cy="152" rx="${rx * 1.3}" ry="5" fill="rgba(0,0,0,.18)"/>`);
+  if (mode !== 'shadow') P.push(`<ellipse cx="${bx}" cy="151" rx="${rx * 1.45}" ry="8" fill="${col ? `url(#s${id})` : 'rgba(0,0,0,.18)'}"/>`);
   // ноги: дальние темнее и чуть сдвинуты, ближние поверх тела
   const w = L.legs[1] * 0.45;
   const leg = (x, y, cls, fill, far) => `<g class="leg ${cls}" style="transform-origin:${x}px ${y}px"><rect x="${x - w / 2 + (far ? -6 : 0)}" y="${y - 4}" width="${w}" height="${150 - y + 2}" rx="${w / 2}" ${S(fill)}/>`
@@ -44,7 +50,14 @@ function dinoSVG(d, mode = 'color') {
   if (mode === 'fossil') P.push(`<path d="M${nb} L${hp}" stroke="${c1}" stroke-width="${nw}" stroke-linecap="round"/>`);
   // тело
   P.push(`<ellipse cx="${bx}" cy="${by}" rx="${rx}" ry="${ry}" transform="rotate(${th} ${bx} ${by})" ${S()}/>`);
-  if (mode === 'color') P.push(`<ellipse cx="${bx + 4}" cy="${by + ry * 0.45}" rx="${rx * 0.7}" ry="${ry * 0.38}" transform="rotate(${th} ${bx} ${by})" fill="${c3}" opacity=".45"/>`);
+  if (col) {
+    const clip = `<clipPath id="c${id}"><ellipse cx="${bx}" cy="${by}" rx="${rx}" ry="${ry}" transform="rotate(${th} ${bx} ${by})"/></clipPath>`, dk = tint(c1, -0.3);
+    let pat = '';
+    if (L.pat === 'stripes') for (let i = -3; i <= 3; i++) pat += `<path d="M${bx + i * rx * 0.24},${by - ry * 1.1} q${rx * 0.08},${ry * 0.6} -${rx * 0.04},${ry * 1.05}" stroke="${dk}" stroke-width="${Math.max(4, rx * 0.07)}" fill="none" opacity=".35" stroke-linecap="round"/>`;
+    if (L.pat === 'spots') for (let i = 0; i < 9; i++) pat += `<ellipse cx="${bx + (i * 37 % 100 - 50) / 50 * rx * 0.85}" cy="${by - ry * 0.45 + (i * 23 % 40) / 40 * ry * 0.6}" rx="${rx * 0.07 + (i % 3) * 2}" ry="${ry * 0.12}" fill="${dk}" opacity=".3"/>`;
+    P.push(clip, `<g clip-path="url(#c${id})">${pat}<ellipse cx="${bx + 4}" cy="${by + ry * 0.55}" rx="${rx * 0.75}" ry="${ry * 0.42}" transform="rotate(${th} ${bx} ${by})" fill="${c3}" opacity=".5"/>`
+      + `<ellipse cx="${bx + rx * 0.15}" cy="${by - ry * 0.55}" rx="${rx * 0.5}" ry="${ry * 0.18}" transform="rotate(${th} ${bx} ${by})" fill="#fff" opacity=".22"/></g>`);
+  }
   if (mode === 'fossil') for (let i = -2; i <= 2; i++) P.push(`<path d="M${bx + i * rx * 0.28},${by - ry * 0.7} q-4,${ry * 0.7} 0,${ry * 1.3}" stroke="${ln}" stroke-width="2" fill="none"/>`);
   if (L.feat.includes('armor')) for (let i = 0; i < 9; i++) { const k = -0.8 + i * 0.2, [x] = at(k), y = by - ry * Math.sqrt(Math.max(0, 1 - k * k)) * 0.75;
     P.push(`<circle cx="${x}" cy="${y}" r="5" ${S(c3)}/>`, `<path d="M${x - 4},${by + ry * 0.2} l4,10 l4,-10 Z" ${S(c2)}/>`); }
@@ -83,8 +96,8 @@ function dinoSVG(d, mode = 'color') {
   return `<svg viewBox="${minX} ${minY} ${vw} ${vh}" width="${vw}" height="${vh}" xmlns="http://www.w3.org/2000/svg">${P.join('')}</svg>`;
 }
 // Птеранодон в полёте: крылья-перепонки, длинный клюв, гребень назад
-function fly(L, c1, c2, c3, S, mode) {
-  const P = [];
+function fly(L, c1, c2, c3, S, mode, defs) {
+  const P = [defs];
   P.push(`<g class="wing l" style="transform-origin:120px 74px"><path d="M120,70 L18,52 Q50,70 60,92 Q90,80 120,84 Z" ${S(c2)}/></g>`);
   P.push(`<g class="wing r" style="transform-origin:120px 74px"><path d="M120,70 L222,52 Q190,70 180,92 Q150,80 120,84 Z" ${S(c2)}/></g>`);
   if (mode === 'color') P.push(`<path d="M30,55 L120,74 L210,55" stroke="${c3}" stroke-width="2" fill="none" opacity=".6"/>`);
