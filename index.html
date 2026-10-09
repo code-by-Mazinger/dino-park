@@ -46,6 +46,18 @@ button{font:inherit;color:inherit;cursor:pointer;border:0}
 #digBtn .q{width:84px;height:56px;flex:none;display:flex;align-items:flex-end;justify-content:center;background:rgba(255,255,255,.25);border-radius:14px;padding:4px}
 #digBtn .q svg{max-width:100%;max-height:100%;width:auto;height:auto}
 #digBtn small{display:block;font-size:14px;font-weight:700;opacity:.9}
+#belt{display:inline-flex;align-items:center;gap:8px;margin-top:6px;padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.85);font-weight:800;font-size:14px}
+#belt i{width:34px;height:10px;border-radius:3px;border:1.5px solid rgba(0,0,0,.35)}
+#sambo{position:absolute;left:12px;bottom:calc(env(safe-area-inset-bottom) + 112px);display:flex;align-items:flex-end;gap:8px;z-index:30}
+#egg{width:70px;height:84px;background:none;padding:0}
+#egg svg{width:100%;height:100%;overflow:visible}
+#egg.wob svg{animation:wob 2.4s ease-in-out infinite;transform-origin:50% 90%}
+@keyframes wob{0%,80%,100%{transform:rotate(0)}85%{transform:rotate(-8deg)}90%{transform:rotate(7deg)}95%{transform:rotate(-4deg)}}
+#trainBtn{padding:10px 14px;border-radius:18px;background:#fff;font-weight:900;font-size:16px;box-shadow:0 4px 0 rgba(0,0,0,.2);margin-bottom:6px}
+#hPic{height:150px;display:flex;align-items:flex-end;justify-content:center;background:linear-gradient(#fff3d6,#e9f7d8);border-radius:20px}
+#hPic svg{max-height:140px;max-width:90%;width:auto;height:auto}
+#hPic.crack svg{animation:wob .6s ease-in-out 3}
+.toast{position:fixed;left:50%;top:40%;transform:translateX(-50%);z-index:40;padding:14px 18px;border-radius:18px;background:rgba(43,33,24,.9);color:#fff;font-weight:800;font-size:18px;text-align:center;max-width:86vw}
 #sign{position:absolute;right:10px;bottom:calc(env(safe-area-inset-bottom) + 2px);font-size:10px;font-weight:700;color:rgba(255,255,255,.7);letter-spacing:.1em}
 /* раскопки */
 #dig{background:radial-gradient(120% 80% at 50% 40%,#b07a48 0%,#7a4f2c 70%,#5a3920 100%)}
@@ -120,7 +132,8 @@ h2{margin:6px 0;font-size:26px}
     <g fill="#3e7d2f" opacity=".8"><path d="M120,760 q10,-40 30,-50 q-8,30 -14,50 Z"/><path d="M260,780 q10,-40 30,-50 q-8,30 -14,50 Z"/><path d="M20,720 q10,-40 30,-50 q-8,30 -14,50 Z"/></g>
   </svg>
   <div id="dinos"></div>
-  <div id="top"><h1>Дино-парк</h1><div id="hello"></div><div id="count"></div></div>
+  <div id="top"><h1>Дино-парк</h1><div id="hello"></div><div id="count"></div><div id="belt"></div></div>
+  <div id="sambo"><button id="egg" aria-label="Яйцо динозавра"></button><button id="trainBtn">🥋 Был на самбо!</button></div>
   <button id="digBtn"><span class="q" id="digQ"></span><span>🦴 На раскопки<small id="digSub">Кто прячется в земле?</small></span></button>
   <div id="sign">code-by-Mazinger</div>
 </div>
@@ -147,6 +160,23 @@ h2{margin:6px 0;font-size:26px}
   <div id="cType"></div>
   <div id="cFacts"></div>
   <button class="go" id="cClose">Готово</button>
+</div></div>
+
+<div class="ovl" id="gate" hidden><div class="card">
+  <div class="big">🥋</div>
+  <h2>Для взрослых</h2>
+  <p style="font-size:18px;font-weight:700">Отметить тренировку по самбо. Сколько будет <span id="gQ"></span>?</p>
+  <input class="fld" id="gIn" type="number" inputmode="numeric" autocomplete="off">
+  <div id="gErr" style="color:#c0392b;font-weight:800;min-height:22px"></div>
+  <button class="go" id="gOk">Отметить</button>
+  <p><button id="gNo" style="background:none;font-weight:800;font-size:17px;color:#6b5a48">Отмена</button></p>
+</div></div>
+
+<div class="ovl" id="hatch" hidden><div class="card">
+  <div id="hPic"></div>
+  <h2 id="hTitle"></h2>
+  <p id="hText" style="font-size:19px;font-weight:700"></p>
+  <button class="go" id="hOk">Ура! 🦖</button>
 </div></div>
 
 <div class="ovl" id="hi" hidden><div class="card">

@@ -37,6 +37,8 @@ for (const ev of ['pointerdown', 'touchend']) addEventListener(ev, audio, { pass
 // ─── состояние ───
 let found = Math.min(DINOS.length, +ls('dp_found') || 0);                            // сколько динозавров уже в парке (по порядку)
 const name = () => ls('dp_name') || '';
+let train = +ls('dp_train') || 0;                                                    // тренировок по самбо (отмечает взрослый)
+const today = () => new Date().toDateString();
 
 // ─── парк: динозавры гуляют, птеранодон летает ───
 let walkers = [], last = performance.now();
@@ -47,6 +49,8 @@ function park(fresh = -1) {
   const next = DINOS[Math.min(found, DINOS.length - 1)];
   $('digQ').innerHTML = found < DINOS.length ? dinoSVG(next, 'shadow') : '🏆';
   $('digSub').textContent = found < DINOS.length ? 'Кто прячется в земле?' : 'Раскопать ещё раз';
+  const b = DL.belt(train); $('belt').innerHTML = `<i style="background:${b.color}"></i>Дино-пояс: ${b.name}` + (b.left ? ` · до «${b.nextName}» ${b.left}` : ' 🏆');
+  $('egg').innerHTML = eggSVG(DL.cracks(train)); $('egg').classList.toggle('wob', DL.cracks(train) > 0);
   const box = $('dinos'); box.innerHTML = ''; walkers = [];
   const W = innerWidth, H = innerHeight, k = Math.min(W, 520) / 560;                // пикселей на единицу рисунка
   DINOS.slice(0, found).forEach((d, i) => {
@@ -59,6 +63,13 @@ function park(fresh = -1) {
     el.onclick = () => card(d);
     box.appendChild(el);
     walkers.push({ el, w, x: i === fresh ? W * 0.6 : Math.random() * (W - w), dir: Math.random() < 0.5 ? -1 : 1, v: (flyer ? 60 : 18 + Math.random() * 16) * depth, rest: 0, flyer });
+  });
+  DL.babies(train).forEach((id, i, all) => {                                           // малыши из яйца — маленькие, впереди, прыгают
+    const d = DINOS.find(x => x.id === id), el = document.createElement('div'), svg = dinoSVG(d), vw = +svg.match(/width="([\d.]+)"/)[1];
+    el.className = 'pd baby' + (fresh === 'baby' && i === all.length - 1 ? ' new' : ''); el.innerHTML = `<div class="flip">${svg}</div>`;
+    const w = vw * k * 0.42; el.style.width = w + 'px'; el.style.bottom = H * 0.13 + 50 + (i % 2) * 14 + 'px'; el.style.zIndex = 14;
+    el.onclick = () => card(d, true); box.appendChild(el);
+    walkers.push({ el, w, x: Math.random() * (W - w), dir: Math.random() < 0.5 ? -1 : 1, v: 26 + Math.random() * 14, rest: 0, flyer: false });
   });
 }
 function step(now) {
@@ -74,14 +85,15 @@ function step(now) {
 }
 
 // ─── карточка динозавра: имя по слогам (нажми — услышишь), факты голосом ───
-function card(d) {
+function card(d, baby = false) {
   audio(); $('cPic').innerHTML = dinoSVG(d);
   $('cName').innerHTML = d.syl.map(s => `<button data-s="${s}">${s}</button>`).join('') + `<button class="all" data-all="1">🔊</button>`;
   $('cType').textContent = (d.kind ? d.kind + ' · ' : '') + { plants: 'Ел растения 🌿', meat: 'Хищник 🍖', fish: 'Ел рыбу 🐟' }[d.diet] + ` · жил в ${{ юрский: 'юрском', меловой: 'меловом' }[d.period]} периоде`;
   $('cFacts').innerHTML = d.facts.map((f, i) => `<button class="fact" data-f="${i}"><b>🔊</b>${esc(f)}</button>`).join('');
   $('cName').onclick = e => { const b = e.target.closest('button'); if (!b) return; say(b.dataset.all ? d.n : b.dataset.s, 0.7); };
   $('cFacts').onclick = e => { const b = e.target.closest('.fact'); if (b) say(d.facts[+b.dataset.f], 0.9); };
-  $('card').hidden = false; say(d.n);
+  if (baby) $('cType').textContent = 'Малыш! Вылупился, потому что ты ходил на самбо 🥋 · ' + $('cType').textContent;
+  $('card').hidden = false; say(baby ? 'Малыш ' + d.n.toLowerCase() + 'а' : d.n);
 }
 $('cClose').onclick = () => { $('card').hidden = true; speechSynthesis && speechSynthesis.cancel(); };
 
@@ -151,6 +163,42 @@ function leaves() { for (let i = 0; i < 26; i++) { const l = document.createElem
   l.style.left = Math.random() * 100 + 'vw'; l.style.top = '-30px'; l.style.setProperty('--dx', (Math.random() * 120 - 60) + 'px'); l.style.animationDelay = Math.random() * 0.6 + 's';
   document.body.appendChild(l); setTimeout(() => l.remove(), 3200); } }
 $('digBtn').onclick = dig;
+
+// ─── самбо: яйцо трескается от тренировок, три — вылупляется малыш; отмечает взрослый (вопрос на умножение) ───
+function eggSVG(c, open = false) {
+  const cr = ['', 'M40,22 l6,8 l-5,6 l7,7', 'M28,40 l8,4 l-3,7 l9,3', 'M52,50 l-7,5 l4,6 l-8,4'].slice(0, c + 1).join(' ');
+  return `<svg viewBox="0 0 80 96"><ellipse cx="40" cy="90" rx="26" ry="5" fill="rgba(0,0,0,.18)"/>`
+    + (open ? '<path d="M14,58 Q14,90 40,90 Q66,90 66,58 L58,52 L50,60 L40,50 L30,60 L22,52 Z" fill="#f4ecd8" stroke="#c9b48a" stroke-width="2"/>'
+      : `<ellipse cx="40" cy="54" rx="27" ry="35" fill="#f4ecd8" stroke="#c9b48a" stroke-width="2"/><circle cx="30" cy="40" r="5" fill="#8fc46b"/><circle cx="50" cy="60" r="6" fill="#8fc46b"/><circle cx="46" cy="32" r="3.5" fill="#8fc46b"/><circle cx="28" cy="68" r="4" fill="#8fc46b"/>`
+        + (cr ? `<path d="${cr}" stroke="#5a4630" stroke-width="2.5" fill="none" stroke-linecap="round"/>` : '')) + '</svg>';
+}
+function toast(t, ms = 2600) { const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), ms); }
+$('egg').onclick = () => { audio(); const left = 3 - DL.cracks(train); say(`Ходи на самбо — и яйцо вылупится! Осталось ${left} ${left === 1 ? 'тренировка' : 'тренировки'}.`); toast(`🥚 Ещё ${left} ${left === 1 ? 'тренировка' : 'тренировки'} по самбо — и кто-то вылупится!`); };
+let gateA = 0;
+$('trainBtn').onclick = () => {
+  audio(); if (ls('dp_lastTrain') === today()) { toast('Сегодняшняя тренировка уже отмечена 💪'); return; }
+  const g = DL.gate(); gateA = g.a; $('gQ').textContent = g.q; $('gIn').value = ''; $('gErr').textContent = ''; $('gate').hidden = false;
+};
+$('gNo').onclick = () => { $('gate').hidden = true; };
+$('gOk').onclick = () => {
+  if (+$('gIn').value !== gateA) { $('gErr').textContent = 'Неверно — это вопрос для взрослых 🙂'; return; }
+  $('gate').hidden = true; const before = DL.belt(train).name; train++; ls('dp_train', train); ls('dp_lastTrain', today());
+  const nb = DL.belt(train).name, beltUp = nb !== before ? ` Новый дино-пояс: ${nb}!` : '';
+  if (DL.cracks(train) === 0) return hatch(beltUp);
+  chime(); park(); $('egg').classList.add('wob'); const left = 3 - DL.cracks(train);
+  say(`Молодец, что сходил на самбо! Яйцо треснуло. Ещё ${left} ${left === 1 ? 'тренировка' : 'тренировки'}!${beltUp}`); toast(`🥋 Тренировка засчитана! Яйцо треснуло.${beltUp}`);
+};
+function hatch(beltUp) {                                                              // яйцо качается, раскалывается — малыш
+  const id = DL.babies(train).slice(-1)[0], d = DINOS.find(x => x.id === id);
+  $('hPic').innerHTML = eggSVG(2); $('hPic').className = 'crack'; $('hTitle').textContent = 'Яйцо вылупляется…'; $('hText').textContent = ''; $('hOk').hidden = true; $('hatch').hidden = false;
+  say('Ой! Кто-то вылупляется!'); noise(0.3, 3000, 0.2, 0.6); noise(0.3, 2500, 0.2, 1.2);
+  setTimeout(() => {
+    $('hPic').className = ''; $('hPic').innerHTML = `<div style="position:relative;width:70%">${dinoSVG(d).replace('<svg ', '<svg style="width:100%;height:auto" ')}</div>`;
+    $('hTitle').textContent = `Малыш ${d.n.toLowerCase()}а!`; $('hText').textContent = `Он вылупился, потому что ты ходил на самбо! 🥋${beltUp}`; $('hOk').hidden = false;
+    roar(); chime(4); leaves(); say(`Ура! Вылупился малыш ${d.n.toLowerCase()}а!${beltUp}`);
+  }, 2000);
+}
+$('hOk').onclick = () => { $('hatch').hidden = true; speechSynthesis && speechSynthesis.cancel(); park('baby'); };
 $('digBack').onclick = () => { speechSynthesis && speechSynthesis.cancel(); park(); };
 
 // ─── первый запуск: имя (хранится только на телефоне) ───
@@ -158,7 +206,7 @@ $('nameOk').onclick = () => { const n = $('nameIn').value.trim().slice(0, 14); l
 park(); if (!ls('dp_name') && ls('dp_name') !== '') $('hi').hidden = false;
 addEventListener('resize', () => { if (!$('park').hidden) park(); });
 requestAnimationFrame(step);
-if (/[?&]debug/.test(location.search)) window.TT = { dig, found3, nameTask, alive, park, cur: () => cur, need: () => need, pos: () => pos };
+if (/[?&]debug/.test(location.search)) window.TT = { dig, found3, nameTask, alive, park, cur: () => cur, need: () => need, pos: () => pos, gateA: () => gateA };
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   const had = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.register('sw.js').then(reg => document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(() => {}); })).catch(() => {});

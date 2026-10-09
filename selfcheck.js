@@ -18,4 +18,12 @@ for (const [k, d] of DINOS.entries()) {
 }
 // сначала короткие имена: среди первых пяти нет пятисложных
 assert(DINOS.slice(0, 5).every(d => d.syl.length <= 4) && DINOS.slice(-3).every(d => d.syl.length === 5));
+// самбо: пояс, трещины, малыши
+assert.strictEqual(DL.belt(0).name, 'белый'); assert.strictEqual(DL.belt(2).left, 1); assert.strictEqual(DL.belt(3).name, 'жёлтый');
+assert.strictEqual(DL.belt(29).name, 'коричневый'); assert.strictEqual(DL.belt(30).name, 'чёрный'); assert.strictEqual(DL.belt(99).left, 0);
+for (let i = 1; i < DL.BELTS.length; i++) assert(DL.BELTS[i][2] > DL.BELTS[i - 1][2], 'пороги поясов растут');
+assert.deepStrictEqual(DL.babies(2), []); assert.deepStrictEqual(DL.babies(3), ['trex']); assert.strictEqual(DL.babies(17).length, 5); assert.strictEqual(DL.babies(18)[5], 'trex');
+assert.strictEqual(DL.cracks(4), 1);
+assert(DL.babies(15).every(id => DINOS.some(d => d.id === id)), 'малыши — известные виды');
+for (let s = 1; s < 30; s++) { const g = DL.gate(DL.rng(s)); const [a, b] = g.q.split(' × ').map(Number); assert(a >= 6 && a <= 9 && b >= 6 && b <= 9 && g.a === a * b); }
 console.log('ВСЁ ОК');
