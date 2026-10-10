@@ -35,4 +35,6 @@ for (let s = 1; s < 20; s++) { const q = DL.prof(5, DL.rng(s)); assert.strictEqu
   assert(q.every(x => DINOS.indexOf(x.d) < 5) && q.some(x => x.truth) && q.some(x => !x.truth));
   assert(q.every(x => x.truth ? x.d.facts.includes(x.raw) : x.d.wrong[0] === x.raw) && new Set(q.map(x => x.raw)).size === 8, 'без повторов');
   assert(q.every(x => x.text.toLowerCase().includes(x.d.n.toLowerCase().slice(0, 5))), 'в каждой фразе понятно, о ком'); }
+// спрятанные экраны прячутся всегда (иначе экран с display:flex лежит поверх парка и ничего не нажимается — баг dp-v8)
+assert(require('fs').readFileSync(__dirname + '/index.html', 'utf8').includes('[hidden]{display:none!important}'), 'правило [hidden]');
 console.log('ВСЁ ОК');
