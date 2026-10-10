@@ -76,9 +76,12 @@ function park(fresh = -1) {
 function step(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
   if (HG && !HG.done && !$('hungry').hidden) {                                      // падающие слоги
-    HG.spawn -= dt; if (HG.spawn <= 0 && HG.cards.length < 4) { spawnCard(); HG.spawn = 1.5; }
-    for (const c of HG.cards) { c.y += c.v * dt; c.el.style.left = c.x + '%'; c.el.style.top = c.y + '%'; if (c.y > 70) c.el.remove(); }
-    HG.cards = HG.cards.filter(c => c.y <= 70);
+    HG.spawn -= dt; if (HG.spawn <= 0 && HG.cards.length < 3) { spawnCard(); HG.spawn = 1.6; }
+    const lim = 100 * ($('eater').getBoundingClientRect().top - 60) / innerHeight;      // падают до облачка, не ниже
+    for (const c of HG.cards) { c.y += c.v * dt; c.el.style.left = c.x + '%'; c.el.style.top = c.y + '%'; if (c.y > lim) c.el.remove(); }
+    HG.cards = HG.cards.filter(c => c.y <= lim);
+    const t = HG.tut && HG.cards.find(c => c.s === HG.target); $('hHand').hidden = !t;   // первая игра: рука показывает нужный слог
+    if (t) { const r = t.el.getBoundingClientRect(); $('hHand').style.left = r.left + r.width / 2 + 'px'; $('hHand').style.top = r.bottom + 'px'; }
   }
   if (!$('park').hidden) for (const a of walkers) {
     if (a.rest > 0) { a.rest -= dt; a.el.classList.remove('walk'); }
@@ -105,38 +108,50 @@ $('cClose').onclick = () => { $('card').hidden = true; speechSynthesis && speech
 
 // ─── раскопки: счищаешь песок → окаменелость → собираешь имя из слогов → динозавр оживает ───
 const digImg = new Image(); digImg.src = 'dig.jpg';
-let cur = 0, sandCtx = null, brushN = 0, cleared = false, need = [], pos = 0, misses = 0;
+// Раскопки в три слоя: песок (тот же кусок фона) → тёмная земля → глина. Под ними по очереди: силуэт → очертания → окаменелость.
+// fill — чем закрашен слой, under — что видно в дырках (следующий слой), stage — как показан динозавр под слоем
+const LAYERS = [{ fill: null, under: '#a8743f', stage: 'sil', say: 'Ого! Видно силуэт. Чисти дальше!' },
+  { fill: '#a8743f', under: '#c9a27a', stage: 'outline', say: 'Появились очертания! Остался последний слой!' },
+  { fill: '#c9a27a', under: '#9a6a3a', stage: 'fossil', say: '' }];
+let cur = 0, sandCtx = null, brushN = 0, cleared = false, need = [], pos = 0, misses = 0, layer = 0;
 function dig() {
   audio(); cur = found < DINOS.length ? found : Math.floor(Math.random() * DINOS.length);
   const d = DINOS[cur]; $('park').hidden = true; $('dig').hidden = false; $('task').hidden = true; $('done').hidden = true;
-  $('fossil').className = ''; $('fossil').innerHTML = dimg(d, 'fossil'); $('digHint').textContent = 'Счищай песок пальцем!'; $('bar').style.display = '';
-  const c = $('sand'), r = c.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1);
-  c.width = r.width * dpr; c.height = r.height * dpr; c.style.opacity = 1; c.style.display = '';
-  sandCtx = c.getContext('2d'); sandCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  sandCtx.globalCompositeOperation = 'source-over'; sandCtx.fillStyle = '#f2c27f'; sandCtx.fillRect(0, 0, r.width, r.height);
-  if (digImg.complete && digImg.naturalWidth) {                                       // как object-fit: cover — тот же участок, что виден на фоне
+  $('fossil').className = ''; $('fossil').innerHTML = dimg(d, 'sil'); $('bar').style.visibility = '';
+  const c = $('sand'); c.style.display = ''; c.style.opacity = 1;                    // сначала показать слой, потом мерить (иначе 0×0 и песка нет)
+  const r = c.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1);
+  c.width = r.width * dpr; c.height = r.height * dpr; sandCtx = c.getContext('2d'); sandCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  layer = 0; cleared = false; brushN = 0; fillLayer();
+  say(found < DINOS.length ? 'Кто-то прячется в земле! Счищай песок со всего квадрата.' : 'Раскопай ещё раз!');
+}
+function fillLayer() {
+  const c = $('sand'), r = c.getBoundingClientRect(), L = LAYERS[layer];
+  $('fossil').firstElementChild.className = 'di ' + L.stage; $('pit').style.backgroundColor = L.under;
+  sandCtx.globalCompositeOperation = 'source-over'; sandCtx.fillStyle = L.fill || '#f2c27f'; sandCtx.fillRect(0, 0, r.width, r.height);
+  if (!L.fill && digImg.complete && digImg.naturalWidth) {                            // верхний слой — тот же участок, что виден на фоне (как object-fit: cover)
     const k = Math.max(innerWidth / digImg.naturalWidth, innerHeight / digImg.naturalHeight), ox = (innerWidth - digImg.naturalWidth * k) / 2, oy = (innerHeight - digImg.naturalHeight * k) / 2;
     sandCtx.drawImage(digImg, (r.left - ox) / k, (r.top - oy) / k, r.width / k, r.height / k, 0, 0, r.width, r.height);
   }
-  for (let i = 0; i < 260; i++) { sandCtx.fillStyle = pick(['rgba(190,140,80,.35)', 'rgba(255,230,180,.4)', 'rgba(160,110,60,.3)']); sandCtx.beginPath(); sandCtx.arc(Math.random() * r.width, Math.random() * r.height, 0.8 + Math.random() * 1.4, 0, 7); sandCtx.fill(); }
-  for (let i = 0; i < 14; i++) { sandCtx.fillStyle = pick(['#9b8a75', '#8a7a66', '#a89880']); sandCtx.beginPath(); sandCtx.ellipse(Math.random() * r.width, Math.random() * r.height, 4 + Math.random() * 6, 3 + Math.random() * 4, Math.random() * 3, 0, 7); sandCtx.fill(); }
-  cleared = false; brushN = 0; $('bar').firstElementChild.style.width = '0';
-  say(found < DINOS.length ? 'Кто-то прячется в земле! Счищай песок.' : 'Раскопай ещё раз!');
+  for (let i = 0; i < 260; i++) { sandCtx.fillStyle = pick(['rgba(120,80,40,.3)', 'rgba(255,230,180,.3)', 'rgba(90,60,30,.25)']); sandCtx.beginPath(); sandCtx.arc(Math.random() * r.width, Math.random() * r.height, 0.8 + Math.random() * 1.6, 0, 7); sandCtx.fill(); }
+  for (let i = 0; i < 12; i++) { sandCtx.fillStyle = pick(['#9b8a75', '#8a7a66', '#a89880']); sandCtx.beginPath(); sandCtx.ellipse(Math.random() * r.width, Math.random() * r.height, 4 + Math.random() * 6, 3 + Math.random() * 4, Math.random() * 3, 0, 7); sandCtx.fill(); }
+  $('bar').firstElementChild.style.width = '0'; $('digHint').textContent = `Слой ${layer + 1} из 3 — счищай весь квадрат!`;
 }
 function brush(e) {
   if (cleared || !sandCtx) return; const r = $('sand').getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
-  sandCtx.globalCompositeOperation = 'destination-out'; sandCtx.beginPath(); sandCtx.arc(x, y, Math.max(22, r.width * 0.07), 0, 7); sandCtx.fill();
+  sandCtx.globalCompositeOperation = 'destination-out'; sandCtx.beginPath(); sandCtx.arc(x, y, Math.max(24, r.width * 0.08), 0, 7); sandCtx.fill();
   if (++brushN % 6 === 0) { noise(0.12, 2500, 0.06); progress(); }
 }
-function progress() {                                                                // доля счищенного — по сетке точек
+function progress() {                                                                // доля счищенного — по сетке точек, включая края и углы
   const c = $('sand'), d = sandCtx.getImageData(0, 0, c.width, c.height).data; let open = 0, n = 0;
-  for (let y = 4; y < c.height; y += 12) for (let x = 4; x < c.width; x += 12) { n++; if (d[(y * c.width + x) * 4 + 3] < 40) open++; }
-  const p = open / n; $('bar').firstElementChild.style.width = Math.min(100, p / 0.55 * 100) + '%';
-  if (p >= 0.55) found3();
+  for (let y = 2; y < c.height; y += 10) for (let x = 2; x < c.width; x += 10) { n++; if (d[(y * c.width + x) * 4 + 3] < 40) open++; }
+  const p = open / n; $('bar').firstElementChild.style.width = Math.min(100, p / 0.93 * 100) + '%';
+  if (p < 0.93) return;
+  if (layer < LAYERS.length - 1) { const said = LAYERS[layer].say; layer++; chime(layer); fillLayer(); say(said); }        // остаток слоя осыпается сам
+  else found3();
 }
 function found3() {
   cleared = true; $('sand').style.opacity = 0; setTimeout(() => { $('sand').style.display = 'none'; }, 800);
-  $('fossil').classList.add('glow'); chime(); $('bar').style.display = 'none'; $('digHint').textContent = 'Ого! Кто же это?';
+  $('fossil').classList.add('glow'); chime(); $('bar').style.visibility = 'hidden'; $('digHint').textContent = 'Ого! Кто же это?';
   setTimeout(nameTask, 900);
 }
 ['pointerdown', 'pointermove'].forEach(ev => $('sand').addEventListener(ev, e => { if (ev === 'pointerdown' || e.buttons || e.pointerType === 'touch') brush(e); }));
@@ -212,35 +227,46 @@ function hatch(beltUp) {                                                        
 $('hOk').onclick = () => { $('hatch').hidden = true; speechSynthesis && speechSynthesis.cancel(); park('baby'); };
 $('digBack').onclick = () => { speechSynthesis && speechSynthesis.cancel(); park(); };
 
-// ─── Голодный динозавр: голос говорит слог, сверху падают слоги — накорми динозавра нужным (10 — и он сыт) ───
+// ─── Голодный динозавр: в облачке он «просит» слог — найди его среди падающих и нажми. Первые 5 — с текстом, следующие 5 — только на слух ───
 let HG = null;
+const LANES = [22, 50, 78];
 function hungry() {
   audio(); const ds = DINOS.slice(0, Math.max(1, found)).filter(d => !d.fly), d = pick(ds.length ? ds : [DINOS[0]]);
-  $('park').hidden = true; $('hungry').hidden = false; $('hDone').hidden = true; $('falls').innerHTML = ''; $('eater').innerHTML = dimg(d);
-  HG = { pool: DL.pool(found), eaten: 0, cards: [], spawn: 0.3, misses: 0, d, done: false, target: '' };
-  nextTarget(); say(`${d.n} проголодался! Корми его слогами. Найди слог: ${HG.target}`, 0.85);
+  $('park').hidden = true; $('hungry').hidden = false; $('hDone').hidden = true; $('falls').innerHTML = ''; $('eaterImg').innerHTML = dimg(d);
+  HG = { pool: DL.pool(found), eaten: 0, cards: [], spawn: 0.2, misses: 0, d, done: false, target: '', tut: !ls('dp_htut') };
+  nextTarget();
+  say(HG.tut ? `${d.n} проголодался! Нажми на слог, который он просит: ${HG.target}` : `${d.n} проголодался! Хочу: ${HG.target}`, 0.85);
 }
-function nextTarget() { HG.target = pick(HG.pool.filter(x => x !== HG.target)); HG.misses = 0; $('hHint').textContent = ''; $('hScore').textContent = `🍖 ${HG.eaten} из 10`; }
-function spawnCard() {                                                              // нужный слог всегда есть на экране, остальные — похожие соседи
-  const s = !HG.cards.some(c => c.s === HG.target) || Math.random() < 0.3 ? HG.target : pick(HG.pool.filter(x => x !== HG.target));
-  const el = document.createElement('button'), c = { el, s, x: 14 + Math.random() * 72, y: -10, v: 6 + Math.random() * 3 };
+const listen = () => HG.eaten >= 5;                                                 // вторая половина — на слух
+function want() { $('hWant').innerHTML = `Хочу: ${!listen() || HG.misses >= 2 ? `<b>${HG.target}</b>` : '<b>?</b>'} 🔊`; }
+function nextTarget() { HG.target = pick(HG.pool.filter(x => x !== HG.target)); HG.misses = 0; want(); $('hScore').textContent = `🍖 ${HG.eaten} из 10`; }
+function spawnCard() {                                                              // не больше трёх, без повторов, каждая — на своей дорожке
+  const onScr = HG.cards.map(c => c.s), free = LANES.filter(x => !HG.cards.some(c => c.x === x && c.y < 40)); if (!free.length) return;
+  const others = HG.pool.filter(x => x !== HG.target && !onScr.includes(x));
+  const s = !onScr.includes(HG.target) ? HG.target : others.length ? pick(others) : null; if (!s) return;
+  const el = document.createElement('button'), c = { el, s, x: pick(free), y: 14, v: 4 + Math.random() * 1.5 };
   el.className = 'fc'; el.textContent = s; el.onpointerdown = () => feed(c); $('falls').appendChild(el); HG.cards.push(c);
 }
 function feed(c) {
   if (c.gone || HG.done) return;
-  if (c.s !== HG.target) { c.el.classList.remove('no'); void c.el.offsetWidth; c.el.classList.add('no'); say(HG.target, 0.7); if (++HG.misses >= 2) $('hHint').textContent = HG.target; return; }
-  c.gone = true; HG.cards = HG.cards.filter(x => x !== c); const e = $('eater').getBoundingClientRect();
+  if (c.s !== HG.target) {                                                          // не то — динозавр качает головой
+    c.el.classList.remove('no'); void c.el.offsetWidth; c.el.classList.add('no'); $('eater').classList.remove('nope'); void $('eater').offsetWidth; $('eater').classList.add('nope');
+    HG.misses++; want(); say(`Не то! Я хочу ${HG.target}`, 0.8); return;
+  }
+  c.gone = true; HG.cards = HG.cards.filter(x => x !== c); const e = $('eaterImg').getBoundingClientRect();
   c.el.classList.add('eat'); c.el.style.left = e.left + e.width * 0.85 + 'px'; c.el.style.top = e.top + e.height * 0.15 + 'px'; setTimeout(() => c.el.remove(), 460);
   $('eater').classList.remove('chomp'); void $('eater').offsetWidth; $('eater').classList.add('chomp'); noise(0.15, 300, 0.3); tone(523 + HG.eaten * 40, 0.1, 0.3, 0.08);
+  if (HG.tut) { HG.tut = false; ls('dp_htut', 1); $('hHand').hidden = true; }
   if (++HG.eaten >= 10) return hungryWin();
-  nextTarget(); setTimeout(() => say(pick(['Ам! ', 'Вкусно! ', 'Ням-ням! ']) + 'Теперь: ' + HG.target, 0.85), 300);
+  nextTarget();
+  setTimeout(() => say(HG.eaten === 5 ? `Ням! А теперь слушай внимательно — я не буду показывать слог. Хочу: ${HG.target}` : pick(['Ам! ', 'Вкусно! ', 'Ням-ням! ']) + 'Хочу: ' + HG.target, 0.85), 300);
 }
 function hungryWin() {
-  HG.done = true; HG.cards.forEach(c => c.el.remove()); HG.cards = []; $('hScore').textContent = '🍖 10 из 10'; roar(); leaves();
+  HG.done = true; HG.cards.forEach(c => c.el.remove()); HG.cards = []; $('hHand').hidden = true; $('hScore').textContent = '🍖 10 из 10'; roar(); leaves();
   $('hDoneText').textContent = `${HG.d.n} съел 10 слогов. ${pick(PRAISE)}`; $('hDone').hidden = false; say(`${HG.d.n} наелся! ${pick(PRAISE)}`);
 }
 $('hungryBtn').onclick = hungry; $('hAgain').onclick = hungry;
-$('hSay').onclick = () => HG && say(HG.target, 0.7);
+$('hSay').onclick = $('hWant').onclick = () => HG && say(HG.target, 0.7);
 $('hBack').onclick = $('hHome').onclick = () => { speechSynthesis && speechSynthesis.cancel(); park(); };
 
 // ─── Профессор-путаник: 8 утверждений, половина — его ошибки. Прочитал сам (без 🔊) и ответил верно — звёздочка ───
