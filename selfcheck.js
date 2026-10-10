@@ -38,6 +38,7 @@ for (let f = 1; f <= DINOS.length; f++) { const r = DL.sents(f, 5, DL.rng(f)); a
 assert.deepStrictEqual(DL.build(0), { n: 0, next: DD.BUILDS[0], left: 3 }); assert.strictEqual(DL.build(2).left, 1);
 assert.strictEqual(DL.build(3).n, 1); assert.strictEqual(DL.build(3).left, 3);
 const all = DD.BUILDS.length * DL.STEP; assert.strictEqual(DL.build(all).next, null); assert.strictEqual(DL.build(all + 7).n, DD.BUILDS.length);
+for (const b of DD.BUILDS) assert(require('fs').existsSync(__dirname + '/builds/' + b[2] + '.webp') && require('fs').readFileSync(__dirname + '/sw.js', 'utf8').includes(`builds/${b[2]}.webp`), b[1] + ': картинка есть и в кэше');
 for (const d of DINOS) assert(require('fs').existsSync(__dirname + '/dinos/' + d.id + '.webp'), d.n + ': есть картинка');
 // мини-игры: слоги — из имён найденных (не меньше 6), профессор — 8 вопросов только про найденных, верные и ошибки вперемешку
 assert.deepStrictEqual(DL.pool(3), [...new Set(DINOS.slice(0, 3).flatMap(d => d.syl))]);

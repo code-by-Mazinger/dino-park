@@ -102,8 +102,9 @@ button{font:inherit;color:inherit;cursor:pointer;border:0}
 #pFeed{margin-top:auto;padding:14px;border-radius:22px;background:rgba(255,250,240,.96);text-align:center}
 #pFeed[hidden]{display:none}
 #stars{display:inline-block;margin-top:6px;padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.85);font-weight:800;font-size:14px}
-.bd{position:absolute;font-size:46px;line-height:1;transform:translateX(-50%);filter:drop-shadow(0 4px 3px rgba(0,0,0,.35));z-index:5;cursor:pointer}
-.bd.far{font-size:34px;z-index:4}
+.bd{position:absolute;transform:translateX(-50%);filter:drop-shadow(0 4px 3px rgba(0,0,0,.3));z-index:5;cursor:pointer;-webkit-touch-callout:none}
+.bd img{display:block;width:100%;height:auto;pointer-events:none;-webkit-user-drag:none}
+.bd.far{z-index:4}
 .bd.new{animation:pop .9s cubic-bezier(.3,1.6,.6,1)}
 .gsheet .gtile:last-child:nth-child(odd){grid-column:span 2}
 #wBox{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top) + 70px);bottom:0;padding:0 14px calc(env(safe-area-inset-bottom) + 14px);display:flex;flex-direction:column;gap:14px;z-index:3}

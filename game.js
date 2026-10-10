@@ -77,10 +77,10 @@ function park(fresh = -1) {
     el.onclick = () => card(d, true); box.appendChild(el);
     walkers.push({ el, w, x: Math.random() * (W - w), dir: Math.random() < 0.5 ? -1 : 1, v: 26 + Math.random() * 14, rest: 0, flyer: false });
   });
-  const B = DL.build(stars), BX = [0.1, 0.88, 0.32, 0.66, 0.5, 0.2, 0.8, 0.35];        // постройки — у края поляны, за динозаврами; 5-я и дальше — второй ряд, дальше и мельче
+  const B = DL.build(stars), BX = [0.1, 0.84, 0.34, 0.59, 0.22, 0.47, 0.71, 0.93];    // постройки у края поляны, за динозаврами; 5-я и дальше — второй ряд, мельче, в промежутках первого
   $('stars').textContent = B.next ? `⭐ ${stars} · ещё ${B.left} до ${B.next[0]}` : `⭐ ${stars} · парк построен 🏆`;
-  DD.BUILDS.slice(0, B.n).forEach(([e, n], i) => { const el = document.createElement('div'); el.className = 'bd' + (i > 3 ? ' far' : '') + (i === newB ? ' new' : ''); el.textContent = e;
-    el.style.left = BX[i] * 100 + '%'; el.style.bottom = H * (i > 3 ? 0.395 : 0.345) + 'px'; el.onclick = () => say(n, 0.9); box.appendChild(el); });
+  DD.BUILDS.slice(0, B.n).forEach(([, n, id], i) => { const el = document.createElement('div'); el.className = 'bd' + (i > 3 ? ' far' : '') + (i === newB ? ' new' : ''); el.innerHTML = `<img src="builds/${id}.webp" alt="${n}" draggable="false">`; el.style.width = k * (i > 3 ? 0.17 : 0.22) + 'px';
+    el.style.left = BX[i] * 100 + '%'; el.style.bottom = H * (i > 3 ? 0.405 : 0.345) + 'px'; el.onclick = () => say(n, 0.9); box.appendChild(el); });
   if (newB >= 0) { const n = DD.BUILDS[newB][1]; newB = -1; setTimeout(() => { leaves(); say('В парке новая постройка: ' + n + '!', 0.9); }, 500); }
 }
 $('stars').onclick = () => { const B = DL.build(stars); say(B.next ? `Звёзд: ${stars}. Ещё ${B.left}, и в парке появится ${B.next[1]}. Звёзды дают, когда читаешь сам.` : `Звёзд: ${stars}. Весь парк построен!`, 0.9); };
