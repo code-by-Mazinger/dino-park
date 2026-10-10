@@ -108,11 +108,10 @@ $('cClose').onclick = () => { $('card').hidden = true; speechSynthesis && speech
 
 // ─── раскопки: счищаешь песок → окаменелость → собираешь имя из слогов → динозавр оживает ───
 const digImg = new Image(); digImg.src = 'dig.jpg';
-// Раскопки в три слоя: песок (тот же кусок фона) → тёмная земля → глина. Под ними по очереди: силуэт → очертания → окаменелость.
+// Раскопки в два слоя: песок (тот же кусок фона) → тёмная земля. Под песком — силуэт, под землёй — окаменелость.
 // fill — чем закрашен слой, under — что видно в дырках (следующий слой), stage — как показан динозавр под слоем
-const LAYERS = [{ fill: null, under: '#a8743f', stage: 'sil', say: 'Ого! Видно силуэт. Чисти дальше!' },
-  { fill: '#a8743f', under: '#c9a27a', stage: 'outline', say: 'Появились очертания! Остался последний слой!' },
-  { fill: '#c9a27a', under: '#9a6a3a', stage: 'fossil', say: '' }];
+const LAYERS = [{ fill: null, under: '#a8743f', stage: 'sil', say: 'Ого! Видно силуэт. Остался последний слой!' },
+  { fill: '#a8743f', under: '#9a6a3a', stage: 'fossil', say: '' }];
 let cur = 0, sandCtx = null, brushN = 0, cleared = false, need = [], pos = 0, misses = 0, layer = 0;
 function dig() {
   audio(); cur = found < DINOS.length ? found : Math.floor(Math.random() * DINOS.length);
@@ -134,7 +133,7 @@ function fillLayer() {
   }
   for (let i = 0; i < 260; i++) { sandCtx.fillStyle = pick(['rgba(120,80,40,.3)', 'rgba(255,230,180,.3)', 'rgba(90,60,30,.25)']); sandCtx.beginPath(); sandCtx.arc(Math.random() * r.width, Math.random() * r.height, 0.8 + Math.random() * 1.6, 0, 7); sandCtx.fill(); }
   for (let i = 0; i < 12; i++) { sandCtx.fillStyle = pick(['#9b8a75', '#8a7a66', '#a89880']); sandCtx.beginPath(); sandCtx.ellipse(Math.random() * r.width, Math.random() * r.height, 4 + Math.random() * 6, 3 + Math.random() * 4, Math.random() * 3, 0, 7); sandCtx.fill(); }
-  $('bar').firstElementChild.style.width = '0'; $('digHint').textContent = `Слой ${layer + 1} из 3 — счищай весь квадрат!`;
+  $('bar').firstElementChild.style.width = '0'; $('digHint').textContent = `Слой ${layer + 1} из ${LAYERS.length} — счищай весь квадрат!`;
 }
 function brush(e) {
   if (cleared || !sandCtx) return; const r = $('sand').getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
