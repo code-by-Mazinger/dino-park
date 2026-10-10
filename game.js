@@ -243,7 +243,7 @@ const LANES = [22, 50, 78];
 function hungry() {
   audio(); const ds = DINOS.slice(0, Math.max(1, found)).filter(d => !d.fly), d = pick(ds.length ? ds : [DINOS[0]]);
   $('park').hidden = true; $('hungry').hidden = false; $('hDone').hidden = true; $('falls').innerHTML = ''; $('eaterImg').innerHTML = dimg(d);
-  HG = { pool: DL.pool(found), eaten: 0, cards: [], spawn: 0.2, misses: 0, d, done: false, target: '', tut: !ls('dp_htut') };
+  HG = { pool: DL.pool(found), eaten: 0, cards: [], spawn: 0.2, misses: 0, earMiss: 0, d, done: false, target: '', tut: !ls('dp_htut') };
   nextTarget();
   say(HG.tut ? `${d.n} проголодался! Нажми на слог, который он просит: ${HG.target}` : `${d.n} проголодался! Хочу: ${HG.target}`, 0.85);
 }
@@ -261,7 +261,7 @@ function feed(c) {
   if (c.gone || HG.done) return;
   if (c.s !== HG.target) {                                                          // не то — динозавр качает головой
     c.el.classList.remove('no'); void c.el.offsetWidth; c.el.classList.add('no'); $('eater').classList.remove('nope'); void $('eater').offsetWidth; $('eater').classList.add('nope');
-    HG.misses++; want(); say(`Не то! Я хочу ${HG.target}`, 0.8); return;
+    HG.misses++; if (listen()) HG.earMiss++; want(); say(`Не то! Я хочу ${HG.target}`, 0.8); return;
   }
   c.gone = true; HG.cards = HG.cards.filter(x => x !== c); const e = $('eaterImg').getBoundingClientRect();
   c.el.classList.add('eat'); c.el.style.left = e.left + e.width * 0.85 + 'px'; c.el.style.top = e.top + e.height * 0.15 + 'px'; setTimeout(() => c.el.remove(), 460);
@@ -273,7 +273,8 @@ function feed(c) {
 }
 function hungryWin() {
   HG.done = true; HG.cards.forEach(c => c.el.remove()); HG.cards = []; $('hHand').hidden = true; $('hScore').textContent = '🍖 10 из 10'; roar(); leaves();
-  $('hDoneText').textContent = `${HG.d.n} съел 10 слогов. ${pick(PRAISE)}`; $('hDone').hidden = false; say(`${HG.d.n} наелся! ${pick(PRAISE)}`);
+  const ear = HG.earMiss <= 2, nb = ear ? addStar() : null;                         // звезда — за слоги на слух почти без промахов: наугад не набрать
+  $('hDoneText').textContent = `${HG.d.n} съел 10 слогов. ${pick(PRAISE)}` + (ear ? ' ⭐ Ты нашёл слоги на слух! +1 звезда в парк!' + built(nb) : ' Найди слоги на слух почти без ошибок — и получишь звезду для парка.'); $('hDone').hidden = false; say(`${HG.d.n} наелся! ${pick(PRAISE)}` + (ear ? ' Ты нашёл слоги на слух — звёздочка в парк!' : ''));
 }
 $('hungryBtn').onclick = hungry; $('hAgain').onclick = hungry;
 $('hSay').onclick = $('hWant').onclick = () => HG && say(HG.target, 0.7);
@@ -418,7 +419,7 @@ $('nameOk').onclick = () => { const n = $('nameIn').value.trim().slice(0, 14); l
 park(); if (!ls('dp_name') && ls('dp_name') !== '') $('hi').hidden = false;
 addEventListener('resize', () => { if (!$('park').hidden) park(); });
 requestAnimationFrame(step);
-if (/[?&]debug/.test(location.search)) window.TT = { dig, found3, nameTask, alive, park, cur: () => cur, need: () => need, pos: () => pos, gateA: () => gateA, HG: () => HG, PQ: () => PQ };
+if (/[?&]debug/.test(location.search)) window.TT = { dig, found3, nameTask, alive, park, cur: () => cur, need: () => need, pos: () => pos, gateA: () => gateA, HG: () => HG, PQ: () => PQ, feed, hungryWin };
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   const had = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.register('sw.js').then(reg => document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(() => {}); })).catch(() => {});
