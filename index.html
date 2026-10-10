@@ -101,6 +101,21 @@ button{font:inherit;color:inherit;cursor:pointer;border:0}
 .ans:active{transform:translateY(4px)}
 #pFeed{margin-top:auto;padding:14px;border-radius:22px;background:rgba(255,250,240,.96);text-align:center}
 #pFeed[hidden]{display:none}
+#stars{display:inline-block;margin-top:6px;padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.85);font-weight:800;font-size:14px}
+.bd{position:absolute;font-size:46px;line-height:1;transform:translateX(-50%);filter:drop-shadow(0 4px 3px rgba(0,0,0,.35));z-index:5;cursor:pointer}
+.bd.far{font-size:34px;z-index:4}
+.bd.new{animation:pop .9s cubic-bezier(.3,1.6,.6,1)}
+.gsheet .gtile:last-child:nth-child(odd){grid-column:span 2}
+#wBox{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top) + 70px);bottom:0;padding:0 14px calc(env(safe-area-inset-bottom) + 14px);display:flex;flex-direction:column;gap:14px;z-index:3}
+#wPic{display:flex;justify-content:center}#wPic img{max-height:min(130px,18dvh);width:auto;max-width:70%}
+#wSlots{flex:none;display:flex;flex-wrap:wrap;gap:8px 10px;min-height:64px;align-items:flex-end}
+#wSlots i{font-style:normal;min-width:54px;padding:4px 2px;border-bottom:3px dashed #c9a26a;font-size:clamp(22px,6.4vw,28px);font-weight:900;text-align:center}
+#wSlots i{color:transparent}#wSlots i.on{border-bottom:3px solid #3cb043;color:#1f6234}
+#wCards{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+#wCards button{padding:12px 16px;border-radius:18px;background:#fffaf0;font-size:clamp(22px,6.4vw,28px);font-weight:900;box-shadow:0 5px 0 #c9a26a}
+#wCards button.used{visibility:hidden}#wCards button.no{animation:no .4s;background:#ffd6d6}#wCards button.hint{animation:hint .8s 3}
+#wFeed{margin-top:auto;padding:14px;border-radius:22px;background:rgba(255,250,240,.96);text-align:center}
+#wFeedText{font-size:20px;font-weight:800;line-height:1.35;margin-bottom:10px}
 #pFeedText{font-size:20px;font-weight:800;line-height:1.35;margin-bottom:10px}
 .gsheet{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0 4px}
 .gtile{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 8px;border-radius:20px;background:#f3ead8;font-weight:900;font-size:16px;line-height:1.15;box-shadow:0 5px 0 #d8c7a6}
@@ -196,7 +211,7 @@ h2{margin:6px 0;font-size:26px}
 <div class="scr" id="park">
   <img id="bg" src="park.jpg" alt="">
   <div id="dinos"></div>
-  <div id="top"><h1>Дино-парк</h1><div id="hello"></div><div id="count"></div><div id="belt"></div></div>
+  <div id="top"><h1>Дино-парк</h1><div id="hello"></div><div id="count"></div><div id="belt"></div><button id="stars"></button></div>
   <div id="sambo"><button id="egg" aria-label="Яйцо динозавра"></button><button id="trainBtn">🥋 Самбо</button></div>
   <div id="games"><button class="gbtn" id="gamesBtn"><b>🎮</b>Игры</button></div>
   <button id="digBtn"><span class="q" id="digQ"></span><span>🦴 На раскопки<small id="digSub">Кто прячется в земле?</small></span></button>
@@ -227,6 +242,15 @@ h2{margin:6px 0;font-size:26px}
   <div id="hDone" hidden><div class="card"><div class="big">😋</div><h2>Динозавр наелся!</h2><p id="hDoneText" style="font-size:19px;font-weight:700"></p><button class="go" id="hAgain">Ещё раз</button><p><button class="link" id="hHome">В парк 🌴</button></p></div></div>
 </div>
 
+<div class="scr game" id="sent" hidden>
+  <div class="gtop"><button class="round" id="wBack" aria-label="В парк">🌴</button><div class="gpill" id="wScore"></div><button class="round" id="wSay" aria-label="Послушать фразу">🔊</button></div>
+  <div id="wBox">
+    <div id="wPic"></div>
+    <div class="bubble" id="wSlots"></div>
+    <div id="wCards"></div>
+    <div id="wFeed" hidden><div id="wFeedText"></div><button class="go" id="wNext">Дальше ▶</button></div>
+  </div>
+</div>
 <div class="scr game" id="prof" hidden>
   <div class="gtop"><button class="round" id="pBack" aria-label="В парк">🌴</button><div class="gpill" id="pScore"></div></div>
   <div id="pBox">
@@ -245,6 +269,7 @@ h2{margin:6px 0;font-size:26px}
     <button class="gtile" id="profBtn"><b>🧑‍🔬</b>Профессор-путаник<small>верно или ошибка</small></button>
     <button class="gtile" id="storiesBtn"><b>📖</b>Дино-истории<small>читаем рассказ</small></button>
     <button class="gtile" id="sizeBtn"><b>📏</b>Я и динозавры<small>кто больше?</small></button>
+    <button class="gtile" id="sentBtn"><b>🧩</b>Собери фразу<small>слова по порядку</small></button>
   </div>
   <button class="go" id="gamesClose">Назад</button>
 </div></div>

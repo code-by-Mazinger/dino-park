@@ -27,6 +27,17 @@ assert.deepStrictEqual(DL.babies(2), []); assert.deepStrictEqual(DL.babies(3), [
 assert.strictEqual(DL.cracks(4), 1);
 assert(DL.babies(15).every(id => DINOS.some(d => d.id === id)), 'малыши — известные виды');
 for (let s = 1; s < 30; s++) { const g = DL.gate(DL.rng(s)); const [a, b] = g.q.split(' × ').map(Number); assert(a >= 6 && a <= 9 && b >= 6 && b <= 9 && g.a === a * b); }
+// фразы: на каждый вид по две, 3–5 слов без повторов внутри фразы, с большой буквы и с точкой
+for (const d of DINOS) { const ss = DD.SENT[d.id]; assert(ss && ss.length === 2, d.n + ': две фразы');
+  for (const t of ss) { const w = t.split(' '); assert(w.length >= 3 && w.length <= 5 && new Set(w).size === w.length && /^[А-ЯЁ]/.test(t) && t.endsWith('.'), t); } }
+for (let f = 1; f <= DINOS.length; f++) { const r = DL.sents(f, 5, DL.rng(f)); assert.strictEqual(r.length, Math.min(5, 2 * f));
+  assert(r.every(x => DINOS.findIndex(d => d.id === x.id) < f), 'фразы только про найденных');
+  assert.strictEqual(new Set(r.map(x => x.t)).size, r.length, 'фразы в раунде не повторяются');
+  if (f >= 5) assert.strictEqual(new Set(r.map(x => x.id)).size, 5, 'при 5+ видах — все разные'); }
+// звёзды → постройки
+assert.deepStrictEqual(DL.build(0), { n: 0, next: DD.BUILDS[0], left: 3 }); assert.strictEqual(DL.build(2).left, 1);
+assert.strictEqual(DL.build(3).n, 1); assert.strictEqual(DL.build(3).left, 3);
+const all = DD.BUILDS.length * DL.STEP; assert.strictEqual(DL.build(all).next, null); assert.strictEqual(DL.build(all + 7).n, DD.BUILDS.length);
 for (const d of DINOS) assert(require('fs').existsSync(__dirname + '/dinos/' + d.id + '.webp'), d.n + ': есть картинка');
 // мини-игры: слоги — из имён найденных (не меньше 6), профессор — 8 вопросов только про найденных, верные и ошибки вперемешку
 assert.deepStrictEqual(DL.pool(3), [...new Set(DINOS.slice(0, 3).flatMap(d => d.syl))]);

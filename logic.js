@@ -40,5 +40,18 @@ function compare(d, cm) {
   if (k > 1.15) return { k: 1, text: `${what} Он чуть больше тебя!` };
   return { k: 0, text: `${what} Он меньше тебя — ты выше компсогната!`.replace('компсогната', d.n.toLowerCase() + 'а') };
 }
-globalThis.DL = { rng, tiles, extra, belt, babies, cracks, gate, BELTS, pool, prof, compare };
+// Звёзды → постройки: сколько построено, что следующее и сколько звёзд до него
+const STEP = 3;
+function build(stars) { const B = DD.BUILDS, n = Math.min(B.length, Math.floor(stars / STEP));
+  return { n, next: B[n] || null, left: n < B.length ? STEP * (n + 1) - stars : 0 }; }
+
+// «Собери предложение»: фразы найденных видов вперемешку, по одной на вид, пока хватает
+function sents(found, k, r = Math.random) {
+  const ids = DD.DINOS.slice(0, found).map(d => d.id), all = ids.flatMap(id => DD.SENT[id].map(t => ({ id, t })));
+  for (let i = all.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [all[i], all[j]] = [all[j], all[i]]; }
+  const out = [], used = new Set(); for (const x of all) if (!used.has(x.id)) { used.add(x.id); out.push(x); }
+  for (const x of all) if (out.length < k && !out.includes(x)) out.push(x);
+  return out.slice(0, k);
+}
+globalThis.DL = { rng, tiles, extra, belt, babies, cracks, gate, BELTS, pool, prof, compare, build, STEP, sents };
 })();

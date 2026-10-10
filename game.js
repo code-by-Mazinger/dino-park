@@ -41,13 +41,16 @@ for (const ev of ['pointerdown', 'touchend']) addEventListener(ev, audio, { pass
 // ─── состояние ───
 let found = Math.min(DINOS.length, +ls('dp_found') || 0);                            // сколько динозавров уже в парке (по порядку)
 const name = () => ls('dp_name') || '';
+let stars = +ls('dp_stars') || 0, newB = -1;                                        // звёзды «прочитал сам» копятся на постройки в парке
+function addStar() { const was = DL.build(stars).n; ls('dp_stars', ++stars); if (DL.build(stars).n === was) return null; newB = was; return DD.BUILDS[was]; }
+const built = b => b ? ` 🏗️ В парке появилось: ${b[1]}!` : '';
 let train = +ls('dp_train') || 0;                                                    // тренировок по самбо (отмечает взрослый)
 const today = () => new Date().toDateString();
 
 // ─── парк: динозавры гуляют, птеранодон летает ───
 let walkers = [], last = performance.now();
 function park(fresh = -1) {
-  $('park').hidden = false; $('dig').hidden = true; ['hungry', 'prof', 'size', 'stories', 'story', 'gamesSheet'].forEach(id => $(id).hidden = true); if (HG) HG.done = true;
+  $('park').hidden = false; $('dig').hidden = true; ['hungry', 'prof', 'size', 'stories', 'story', 'sent', 'gamesSheet'].forEach(id => $(id).hidden = true); if (HG) HG.done = true;
   $('hello').textContent = name() ? `Палеонтолог ${name()}` : '';
   $('count').textContent = found >= DINOS.length ? `Все ${DINOS.length} динозавров найдены! 🏆` : `🦕 В парке: ${found} из ${DINOS.length}`;
   const next = DINOS[Math.min(found, DINOS.length - 1)];
@@ -74,7 +77,13 @@ function park(fresh = -1) {
     el.onclick = () => card(d, true); box.appendChild(el);
     walkers.push({ el, w, x: Math.random() * (W - w), dir: Math.random() < 0.5 ? -1 : 1, v: 26 + Math.random() * 14, rest: 0, flyer: false });
   });
+  const B = DL.build(stars), BX = [0.1, 0.88, 0.32, 0.66, 0.5, 0.2, 0.8, 0.35];        // постройки — у края поляны, за динозаврами; 5-я и дальше — второй ряд, дальше и мельче
+  $('stars').textContent = B.next ? `⭐ ${stars} · ещё ${B.left} до ${B.next[0]}` : `⭐ ${stars} · парк построен 🏆`;
+  DD.BUILDS.slice(0, B.n).forEach(([e, n], i) => { const el = document.createElement('div'); el.className = 'bd' + (i > 3 ? ' far' : '') + (i === newB ? ' new' : ''); el.textContent = e;
+    el.style.left = BX[i] * 100 + '%'; el.style.bottom = H * (i > 3 ? 0.395 : 0.345) + 'px'; el.onclick = () => say(n, 0.9); box.appendChild(el); });
+  if (newB >= 0) { const n = DD.BUILDS[newB][1]; newB = -1; setTimeout(() => { leaves(); say('В парке новая постройка: ' + n + '!', 0.9); }, 500); }
 }
+$('stars').onclick = () => { const B = DL.build(stars); say(B.next ? `Звёзд: ${stars}. Ещё ${B.left}, и в парке появится ${B.next[1]}. Звёзды дают, когда читаешь сам.` : `Звёзд: ${stars}. Весь парк построен!`, 0.9); };
 function step(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
   if (HG && !HG.done && !$('hungry').hidden) {                                      // падающие слоги
@@ -298,7 +307,9 @@ $('pSay').onclick = () => { PQ.heard = true; say(PQ.q[PQ.i].text, 0.85); };
 $('pYes').onclick = () => answer(true); $('pNo').onclick = () => answer(false);
 $('pNext').onclick = () => { if (++PQ.i < PQ.q.length) showQ(); else {
   $('pDoneTitle').textContent = `Ты поймал ${PQ.caught} ${plural(PQ.caught, 'ошибку', 'ошибки', 'ошибок')} профессора!`;
-  $('pDoneText').textContent = `Правильных ответов: ${PQ.right} из ${PQ.q.length}. ⭐ Прочитал сам: ${PQ.self}.`; $('pDone').hidden = false; leaves(); roar();
+  const nb = PQ.self >= 5 ? addStar() : null;                                       // звезда в парк — за раунд, а не за каждый ответ: угадать 5 из 8 трудно
+  $('pDoneText').textContent = `Правильных ответов: ${PQ.right} из ${PQ.q.length}. ⭐ Прочитал сам: ${PQ.self}.`
+    + (PQ.self >= 5 ? ' +1 звезда в парк!' + built(nb) : ' Прочитай сам 5 из 8 — и получишь звезду для парка.'); $('pDone').hidden = false; leaves(); roar();
   say(`Ты поймал ${PQ.caught} ${plural(PQ.caught, 'ошибку', 'ошибки', 'ошибок')}! Спасибо, что учишь профессора!`); } };
 $('profBtn').onclick = prof; $('pAgain').onclick = prof;
 $('pBack').onclick = $('pHome').onclick = () => { speechSynthesis && speechSynthesis.cancel(); park(); };
@@ -361,12 +372,46 @@ $('rAns').onclick = e => {
   if (+b.dataset.k !== 0) { b.classList.remove('no'); void b.offsetWidth; b.classList.add('no'); $('rFeed').textContent = 'Не то. Перечитай историю — ответ там!'; say('Не то. Перечитай историю — ответ там!', 0.9); return; }
   ST.done = true; b.classList.add('yes'); chime(); leaves();
   const self = !ST.heard, r = readIds(); if (!r.includes(ST.st.id)) { r.push(ST.st.id); ls('dp_read', JSON.stringify(r)); }
-  const sr = readIds('dp_self'); if (self && !sr.includes(ST.st.id)) { sr.push(ST.st.id); ls('dp_self', JSON.stringify(sr)); }
-  const t = `Правильно! ${self ? '⭐ Ты прочитал историю сам!' : pick(PRAISE)}`; $('rFeed').textContent = t; say(t.replace('⭐ ', ''), 0.9);
+  const sr = readIds('dp_self'); let nb = null, first = self && !sr.includes(ST.st.id); if (first) { sr.push(ST.st.id); ls('dp_self', JSON.stringify(sr)); nb = addStar(); }
+  const t = `Правильно! ${self ? '⭐ Ты прочитал историю сам!' : pick(PRAISE)}` + (first ? ' +1 звезда в парк!' + built(nb) : ''); $('rFeed').textContent = t; say(t.replace('⭐ ', ''), 0.9);
 };
 $('storiesBtn').onclick = storiesOpen;
 $('stBack').onclick = () => { speechSynthesis && speechSynthesis.cancel(); park(); };
 $('rBack').onclick = () => { speechSynthesis && speechSynthesis.cancel(); storiesOpen(); };
+
+// ─── «Собери фразу»: слова вразнобой → по порядку. На карточках нет большой буквы и точки — иначе можно собрать, не читая ───
+let WG = null;
+const wNew = () => { WG = { q: DL.sents(found, 5), i: 0, got: 0 }; showW(); };
+function sentOpen() {
+  audio(); if (!found) { toast('Сначала найди динозавра на раскопках! 🦴'); return; }
+  $('park').hidden = true; $('sent').hidden = false; wNew(); say('Собери фразу. Нажимай слова по порядку.', 0.9);
+}
+function showW() {
+  const x = WG.q[WG.i], w = x.t.split(' ');
+  Object.assign(WG, { w, k: 0, miss: 0, heard: false, done: false });
+  $('wScore').textContent = `Фраза ${WG.i + 1} из ${WG.q.length} · ⭐ ${WG.got}`;
+  $('wPic').innerHTML = dimg(DINOS.find(d => d.id === x.id)); $('wSlots').innerHTML = w.map(t => `<i>${esc(t)}</i>`).join(''); $('wFeed').hidden = true; $('wCards').hidden = false;   // слово уже в ячейке, но невидимо — ширина не меняется, карточки не прыгают
+  let o; do o = w.map((_, i) => i).sort(() => Math.random() - 0.5); while (o.every((v, i) => v === i));   // не в готовом порядке
+  $('wCards').innerHTML = o.map(i => `<button data-i="${i}">${esc(w[i].replace('.', '').toLowerCase())}</button>`).join('');
+}
+$('wCards').onclick = e => {
+  const b = e.target.closest('button'); if (!b || WG.done || b.classList.contains('used')) return;
+  if (+b.dataset.i !== WG.k) { WG.miss++; b.classList.remove('no'); void b.offsetWidth; b.classList.add('no'); tone(220, 0, 0.25, 0.06);
+    if (WG.miss >= 2) $('wCards').querySelector(`[data-i="${WG.k}"]`).classList.add('hint'); return; }
+  b.classList.add('used'); $('wCards').querySelectorAll('.hint').forEach(x => x.classList.remove('hint'));
+  $('wSlots').children[WG.k].classList.add('on');
+  if (++WG.k < WG.w.length) { say(b.textContent, 0.9); return; }
+  WG.done = true; chime(); leaves(); $('wCards').hidden = true;   // пустые места карточек не нужны — освобождаем место под похвалу
+  const self = !WG.heard && WG.miss <= WG.w.length - 3; let t = pick(PRAISE);    // 3 слова — без ошибок, 4 — одна, 5 — две
+  if (self) { WG.got++; t = '⭐ Ты собрал фразу сам!' + built(addStar()); }
+  $('wScore').textContent = `Фраза ${WG.i + 1} из ${WG.q.length} · ⭐ ${WG.got}`;
+  $('wFeedText').textContent = t; $('wNext').textContent = WG.i + 1 < WG.q.length ? 'Дальше ▶' : 'Ещё раз ▶'; $('wFeed').hidden = false;
+  say(WG.q[WG.i].t + ' ' + t.replace(/[⭐🏗️]/gu, ''), 0.9);
+};
+$('wSay').onclick = () => { WG.heard = true; say(WG.q[WG.i].t, 0.85); };
+$('wNext').onclick = () => { if (++WG.i < WG.q.length) showW(); else wNew(); };
+$('sentBtn').onclick = sentOpen;
+$('wBack').onclick = () => { speechSynthesis && speechSynthesis.cancel(); park(); };
 
 // ─── первый запуск: имя (хранится только на телефоне) ───
 $('nameOk').onclick = () => { const n = $('nameIn').value.trim().slice(0, 14); ls('dp_name', n); $('hi').hidden = true; audio(); park(); say(`Привет${n ? ', ' + n : ''}! Ты палеонтолог. Пойдём на раскопки!`); };
