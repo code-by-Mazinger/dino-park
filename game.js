@@ -336,13 +336,13 @@ $('hOkBtn').onclick = () => { const v = Math.round(+$('hIn').value); if (!(v >= 
 $('sBack').onclick = () => { speechSynthesis && speechSynthesis.cancel(); park(); };
 
 // ─── Дино-истории: короткий рассказ (каждое предложение можно послушать) и вопрос; прочитал сам — звёздочка ───
-const readIds = () => { try { return JSON.parse(ls('dp_read') || '[]'); } catch (e) { return []; } };
+const readIds = (k = 'dp_read') => { try { return JSON.parse(ls(k) || '[]'); } catch (e) { return []; } };   // dp_read — пройдена, dp_self — прочитал сам
 let ST = null;
 function storiesOpen() {
   audio(); $('park').hidden = true; $('story').hidden = true; $('stories').hidden = false;
-  const done = readIds();
+  const done = readIds(), self = readIds('dp_self');
   $('stList').innerHTML = DD.STORIES.map((st, i) => { const d = DINOS.find(x => x.id === st.id), open = DINOS.indexOf(d) < found;
-    return `<button class="stc" data-i="${i}" ${open ? '' : 'disabled'}>${open ? dimg(d) : dimg(d, 'shadow')}<div>${open ? 'Про ' + d.n.toLowerCase() + 'а' : 'Найди на раскопках'}</div><span>${done.includes(st.id) ? '⭐' : open ? '📖' : '🔒'}</span></button>`; }).join('');
+    return `<button class="stc" data-i="${i}" ${open ? '' : 'disabled'}>${open ? dimg(d) : dimg(d, 'shadow')}<div>${open ? 'Про ' + d.n.toLowerCase() + 'а' : 'Найди на раскопках'}</div><span>${self.includes(st.id) ? '⭐' : done.includes(st.id) ? '✅' : open ? '📖' : '🔒'}</span></button>`; }).join('');
 }
 $('stList').onclick = e => { const b = e.target.closest('.stc'); if (b && !b.disabled) story(+b.dataset.i); };
 function story(i) {
@@ -359,6 +359,7 @@ $('rAns').onclick = e => {
   if (+b.dataset.k !== 0) { b.classList.remove('no'); void b.offsetWidth; b.classList.add('no'); $('rFeed').textContent = 'Не то. Перечитай историю — ответ там!'; say('Не то. Перечитай историю — ответ там!', 0.9); return; }
   ST.done = true; b.classList.add('yes'); chime(); leaves();
   const self = !ST.heard, r = readIds(); if (!r.includes(ST.st.id)) { r.push(ST.st.id); ls('dp_read', JSON.stringify(r)); }
+  const sr = readIds('dp_self'); if (self && !sr.includes(ST.st.id)) { sr.push(ST.st.id); ls('dp_self', JSON.stringify(sr)); }
   const t = `Правильно! ${self ? '⭐ Ты прочитал историю сам!' : pick(PRAISE)}`; $('rFeed').textContent = t; say(t.replace('⭐ ', ''), 0.9);
 };
 $('storiesBtn').onclick = storiesOpen;
