@@ -13,10 +13,12 @@ const dimg = (d, mode = 'color') => `<img class="di ${mode}" src="dinos/${d.id}.
 let voice = null;
 const pickVoice = () => { const v = speechSynthesis.getVoices().filter(v => v.lang && v.lang.toLowerCase().startsWith('ru')); voice = v.find(x => /milena|милена/i.test(x.name)) || v[0] || null; };
 if ('speechSynthesis' in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+let sayT = 0;
 function say(text, rate = 0.85) {
   if (!('speechSynthesis' in window)) return;
-  speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text.toLowerCase());
-  u.lang = 'ru-RU'; if (voice) u.voice = voice; u.rate = rate; u.pitch = 1.05; speechSynthesis.speak(u);
+  const s = speechSynthesis, u = new SpeechSynthesisUtterance(text.toLowerCase());
+  u.lang = 'ru-RU'; if (voice) u.voice = voice; u.rate = rate; u.pitch = 1.05; clearTimeout(sayT); s.resume();   // resume: после сворачивания iOS оставляет синтез на паузе
+  if (s.speaking || s.pending) { s.cancel(); sayT = setTimeout(() => s.speak(u), 150); } else s.speak(u);   // iOS Safari теряет фразу, если speak() сразу после cancel()
 }
 
 // ─── звуки: рык, кисточка, колокольчик ───
