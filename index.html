@@ -102,6 +102,39 @@ button{font:inherit;color:inherit;cursor:pointer;border:0}
 #pFeed{margin-top:auto;padding:14px;border-radius:22px;background:rgba(255,250,240,.96);text-align:center}
 #pFeed[hidden]{display:none}
 #pFeedText{font-size:20px;font-weight:800;line-height:1.35;margin-bottom:10px}
+.gsheet{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0 4px}
+.gtile{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 8px;border-radius:20px;background:#f3ead8;font-weight:900;font-size:16px;line-height:1.15;box-shadow:0 5px 0 #d8c7a6}
+.gtile b{font-size:40px;line-height:1}.gtile small{font-weight:700;font-size:13px;color:#6b5a48}
+.gtile:active{transform:translateY(3px);box-shadow:0 2px 0 #d8c7a6}
+/* я и динозавры */
+#sStage{position:absolute;left:12px;right:12px;top:calc(env(safe-area-inset-top) + 70px);height:min(42dvh,340px);z-index:2}
+#sGround{position:absolute;left:0;right:0;bottom:0;height:4px;border-radius:2px;background:rgba(60,40,20,.5)}
+#sStage .kid,#sStage .sd{position:absolute;bottom:2px}
+#sStage .kid{display:flex;flex-direction:column;align-items:center}
+#sStage .kid svg{filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 1px #fff)}
+#sStage .kid span{position:absolute;left:0;top:100%;margin-top:6px;font-weight:900;font-size:14px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6);white-space:nowrap}
+#sStage .sd img{width:100%;display:block}
+#sPanel{position:absolute;left:14px;right:14px;bottom:calc(env(safe-area-inset-bottom) + 14px);display:flex;flex-direction:column;gap:12px;z-index:3}
+#sText{font-size:clamp(20px,5.8vw,26px);font-weight:900;line-height:1.3}
+#sSay,#rText .sent{font:inherit}
+#sSay{margin-top:10px;padding:8px 14px;border-radius:14px;background:#ffe9c2;font-weight:800;font-size:16px}
+#sNav{display:flex;gap:12px}#sNav .go{flex:1;font-size:26px;padding:12px}
+/* истории */
+#stList{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top) + 70px);bottom:0;overflow-y:auto;padding:0 14px calc(env(safe-area-inset-bottom) + 14px);display:flex;flex-direction:column;gap:10px}
+.stc{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:20px;background:rgba(255,250,240,.95);font-weight:900;font-size:19px;text-align:left;box-shadow:0 4px 0 rgba(0,0,0,.15)}
+.stc img{width:96px;height:auto}.stc span{margin-left:auto;font-size:24px}
+.stc:disabled{opacity:.6}
+#rBox{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top) + 66px);bottom:0;overflow-y:auto;padding:0 14px calc(env(safe-area-inset-bottom) + 14px);display:flex;flex-direction:column;gap:10px}
+#rPic{display:flex;justify-content:center}#rPic img{max-height:min(20dvh,150px);width:auto;max-width:80%}
+#rText{display:flex;flex-direction:column;gap:6px}
+#rText .sent{display:block;width:100%;text-align:left;background:none;font-size:clamp(20px,5.8vw,25px);font-weight:800;line-height:1.3;padding:4px 6px;border-radius:12px}
+#rText .sent:active,#rText .sent.on{background:#ffe9c2}
+#rQ{padding:12px;border-radius:22px;background:rgba(255,250,240,.96)}
+#rQText{font-size:clamp(20px,5.6vw,24px);font-weight:900;margin-bottom:8px}
+#rAns{display:flex;flex-direction:column;gap:8px}
+#rAns button{padding:12px;border-radius:16px;background:#f3ead8;font-weight:900;font-size:20px;box-shadow:0 4px 0 #d8c7a6}
+#rAns button.no{animation:no .4s}#rAns button.yes{background:#bff0c5}
+#rFeed{font-weight:800;font-size:18px;margin-top:8px;min-height:22px}
 #sign{position:absolute;right:10px;bottom:calc(env(safe-area-inset-bottom) + 2px);font-size:10px;font-weight:700;color:rgba(255,255,255,.7);letter-spacing:.1em}
 /* раскопки */
 #dig{background:#e9b77a url(dig.jpg) 50% 50%/cover;display:flex;flex-direction:column}
@@ -165,7 +198,7 @@ h2{margin:6px 0;font-size:26px}
   <div id="dinos"></div>
   <div id="top"><h1>Дино-парк</h1><div id="hello"></div><div id="count"></div><div id="belt"></div></div>
   <div id="sambo"><button id="egg" aria-label="Яйцо динозавра"></button><button id="trainBtn">🥋 Самбо</button></div>
-  <div id="games"><button class="gbtn" id="hungryBtn"><b>🍖</b>Голодный</button><button class="gbtn" id="profBtn"><b>🧑‍🔬</b>Профессор</button></div>
+  <div id="games"><button class="gbtn" id="gamesBtn"><b>🎮</b>Игры</button></div>
   <button id="digBtn"><span class="q" id="digQ"></span><span>🦴 На раскопки<small id="digSub">Кто прячется в земле?</small></span></button>
   <div id="sign">code-by-Mazinger</div>
 </div>
@@ -203,6 +236,47 @@ h2{margin:6px 0;font-size:26px}
     <div id="pFeed" hidden><div id="pFeedText"></div><button class="go" id="pNext">Дальше ▶</button></div>
   </div>
   <div id="pDone" hidden><div class="card"><div class="big">🎓</div><h2 id="pDoneTitle"></h2><p id="pDoneText" style="font-size:19px;font-weight:700"></p><button class="go" id="pAgain">Ещё раз</button><p><button class="link" id="pHome">В парк 🌴</button></p></div></div>
+</div>
+
+<div class="ovl" id="gamesSheet" hidden><div class="card">
+  <h2>Во что поиграем?</h2>
+  <div class="gsheet">
+    <button class="gtile" id="hungryBtn"><b>🍖</b>Голодный динозавр<small>слоги</small></button>
+    <button class="gtile" id="profBtn"><b>🧑‍🔬</b>Профессор-путаник<small>верно или ошибка</small></button>
+    <button class="gtile" id="storiesBtn"><b>📖</b>Дино-истории<small>читаем рассказ</small></button>
+    <button class="gtile" id="sizeBtn"><b>📏</b>Я и динозавры<small>кто больше?</small></button>
+  </div>
+  <button class="go" id="gamesClose">Назад</button>
+</div></div>
+
+<div class="scr game" id="size" hidden>
+  <div class="gtop"><button class="round" id="sBack" aria-label="В парк">🌴</button><div class="gpill">📏 Я и динозавры</div><button class="round" id="sEdit" aria-label="Изменить рост">✏️</button></div>
+  <div id="sStage"><div id="sGround"></div></div>
+  <div id="sPanel"><div class="bubble"><div id="sText"></div><button id="sSay">🔊 Послушать</button></div>
+    <div id="sNav"><button class="go" id="sPrev">◀</button><button class="go" id="sNext">▶</button></div></div>
+</div>
+
+<div class="ovl" id="heightAsk" hidden><div class="card">
+  <div style="font-size:40px">📏</div>
+  <h2>Для взрослых</h2>
+  <p style="font-size:18px;font-weight:700">Какой рост у палеонтолога? В сантиметрах.</p>
+  <input class="fld" id="hIn" type="number" inputmode="numeric" placeholder="например, 120" autocomplete="off">
+  <div id="hErr" style="color:#c0392b;font-weight:800;min-height:22px"></div>
+  <div style="display:flex;gap:10px;justify-content:center"><button class="go" id="hOkBtn">Готово</button><button class="go" id="hNoBtn" style="background:linear-gradient(#cfc4b2,#a99c86);box-shadow:0 6px 0 #857a66">Отмена</button></div>
+</div></div>
+
+<div class="scr game" id="stories" hidden>
+  <div class="gtop"><button class="round" id="stBack" aria-label="В парк">🌴</button><div class="gpill">📖 Дино-истории</div><div style="width:48px"></div></div>
+  <div id="stList"></div>
+</div>
+
+<div class="scr game" id="story" hidden>
+  <div class="gtop"><button class="round" id="rBack" aria-label="К историям">📖</button><div class="gpill" id="rTitle"></div><div style="width:48px"></div></div>
+  <div id="rBox">
+    <div id="rPic"></div>
+    <div class="bubble" id="rText"></div>
+    <div id="rQ"><div id="rQText"></div><div id="rAns"></div><div id="rFeed"></div></div>
+  </div>
 </div>
 
 <div class="ovl" id="card" hidden><div class="card">

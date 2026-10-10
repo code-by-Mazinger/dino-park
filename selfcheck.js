@@ -37,4 +37,11 @@ for (let s = 1; s < 20; s++) { const q = DL.prof(5, DL.rng(s)); assert.strictEqu
   assert(q.every(x => x.text.toLowerCase().includes(x.d.n.toLowerCase().slice(0, 5))), 'в каждой фразе понятно, о ком'); }
 // спрятанные экраны прячутся всегда (иначе экран с display:flex лежит поверх парка и ничего не нажимается — баг dp-v8)
 assert(require('fs').readFileSync(__dirname + '/index.html', 'utf8').includes('[hidden]{display:none!important}'), 'правило [hidden]');
+// рост: длины заданы; тираннозавр (12 м) против 120 см — в 10 раз; компсогнат — меньше ребёнка
+assert(DINOS.every(d => d.len > 0), 'у всех есть длина');
+assert.strictEqual(DL.compare(DINOS.find(d => d.id === 'trex'), 120).k, 10);
+assert.strictEqual(DL.compare(DINOS.find(d => d.id === 'compy'), 120).k, 0);
+assert(DL.compare(DINOS.find(d => d.id === 'ptera'), 120).text.startsWith('Размах крыльев птеранодона'));
+// истории: про известных динозавров, 3–4 предложения, три разных ответа
+for (const st of DD.STORIES) { assert(DINOS.some(d => d.id === st.id) && st.t.length >= 3 && st.t.length <= 4 && st.a.length === 3 && new Set(st.a).size === 3, st.id + ': история'); }
 console.log('ВСЁ ОК');

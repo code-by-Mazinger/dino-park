@@ -45,7 +45,7 @@ const today = () => new Date().toDateString();
 // ─── парк: динозавры гуляют, птеранодон летает ───
 let walkers = [], last = performance.now();
 function park(fresh = -1) {
-  $('park').hidden = false; $('dig').hidden = true; $('hungry').hidden = $('prof').hidden = true; if (HG) HG.done = true;
+  $('park').hidden = false; $('dig').hidden = true; ['hungry', 'prof', 'size', 'stories', 'story', 'gamesSheet'].forEach(id => $(id).hidden = true); if (HG) HG.done = true;
   $('hello').textContent = name() ? `Палеонтолог ${name()}` : '';
   $('count').textContent = found >= DINOS.length ? `Все ${DINOS.length} динозавров найдены! 🏆` : `🦕 В парке: ${found} из ${DINOS.length}`;
   const next = DINOS[Math.min(found, DINOS.length - 1)];
@@ -300,6 +300,70 @@ $('pNext').onclick = () => { if (++PQ.i < PQ.q.length) showQ(); else {
   say(`Ты поймал ${PQ.caught} ${plural(PQ.caught, 'ошибку', 'ошибки', 'ошибок')}! Спасибо, что учишь профессора!`); } };
 $('profBtn').onclick = prof; $('pAgain').onclick = prof;
 $('pBack').onclick = $('pHome').onclick = () => { speechSynthesis && speechSynthesis.cancel(); park(); };
+
+// ─── «🎮 Игры»: выбор занятия ───
+$('gamesBtn').onclick = () => { audio(); $('gamesSheet').hidden = false; };
+$('gamesClose').onclick = () => { $('gamesSheet').hidden = true; };
+$('gamesSheet').addEventListener('click', e => { if (e.target.closest('.gtile')) $('gamesSheet').hidden = true; });
+
+// ─── «Я и динозавры»: ребёнок и динозавр в одном масштабе (рост вводит взрослый) ───
+let sizeI = 0;
+const kidSVG = h => `<svg viewBox="0 0 40 100" height="${h}" width="${h * 0.4}"><circle cx="20" cy="12" r="10" fill="#f2c7a5"/><path d="M8 26 Q20 20 32 26 L34 60 L26 60 L26 100 L21 100 L21 64 L19 64 L19 100 L14 100 L14 60 L6 60 Z" fill="#2f6bff"/><circle cx="16" cy="11" r="1.6" fill="#222"/><circle cx="24" cy="11" r="1.6" fill="#222"/><path d="M15 16 Q20 20 25 16" stroke="#a3344f" stroke-width="1.6" fill="none"/></svg>`;
+function sizeOpen() {
+  audio(); if (!found) { toast('Сначала найди динозавра на раскопках! 🦴'); return; }
+  if (!+ls('dp_cm')) { $('hIn').value = ''; $('hErr').textContent = ''; $('heightAsk').hidden = false; return; }
+  $('park').hidden = true; $('size').hidden = false; showSize();
+}
+async function showSize() {
+  const list = DINOS.slice(0, found); sizeI = (sizeI + list.length) % list.length; const d = list[sizeI], cm = +ls('dp_cm'), h = cm / 100;
+  const st = $('sStage'), W = st.clientWidth, Hs = st.clientHeight, img = new Image(); img.src = `dinos/${d.id}.webp`;
+  try { await img.decode(); } catch (e) {}
+  const asp = img.naturalHeight / img.naturalWidth || 0.6, gap = 0.4;
+  const ppm = Math.min((W - 10) / (h * 0.4 + gap + d.len), Hs * 0.9 / (d.len * asp), Hs * 0.9 / h);   // метр → пиксели, чтобы влезли оба
+  const kh = h * ppm, dw = d.len * ppm;
+  st.querySelectorAll('.kid,.sd').forEach(e => e.remove());
+  st.insertAdjacentHTML('beforeend', `<div class="kid" style="left:4px">${kidSVG(kh)}<span>${esc(name() || 'Я')} · ${cm} см</span></div>`
+    + `<div class="sd" style="left:${4 + kh * 0.4 + gap * ppm}px;width:${dw}px">${dimg(d)}</div>`);
+  const t = DL.compare(d, cm).text; $('sText').textContent = t; say(t, 0.9);
+}
+$('sizeBtn').onclick = sizeOpen;
+$('sPrev').onclick = () => { sizeI--; showSize(); }; $('sNext').onclick = () => { sizeI++; showSize(); };
+$('sSay').onclick = () => say($('sText').textContent, 0.9);
+$('sEdit').onclick = () => { $('hIn').value = ls('dp_cm') || ''; $('hErr').textContent = ''; $('heightAsk').hidden = false; };
+$('hNoBtn').onclick = () => { $('heightAsk').hidden = true; };
+$('hOkBtn').onclick = () => { const v = Math.round(+$('hIn').value); if (!(v >= 60 && v <= 200)) { $('hErr').textContent = 'Введите рост от 60 до 200 см'; return; }
+  ls('dp_cm', v); $('heightAsk').hidden = true; $('park').hidden = true; $('size').hidden = false; showSize(); };
+$('sBack').onclick = () => { speechSynthesis && speechSynthesis.cancel(); park(); };
+
+// ─── Дино-истории: короткий рассказ (каждое предложение можно послушать) и вопрос; прочитал сам — звёздочка ───
+const readIds = () => { try { return JSON.parse(ls('dp_read') || '[]'); } catch (e) { return []; } };
+let ST = null;
+function storiesOpen() {
+  audio(); $('park').hidden = true; $('story').hidden = true; $('stories').hidden = false;
+  const done = readIds();
+  $('stList').innerHTML = DD.STORIES.map((st, i) => { const d = DINOS.find(x => x.id === st.id), open = DINOS.indexOf(d) < found;
+    return `<button class="stc" data-i="${i}" ${open ? '' : 'disabled'}>${open ? dimg(d) : dimg(d, 'shadow')}<div>${open ? 'Про ' + d.n.toLowerCase() + 'а' : 'Найди на раскопках'}</div><span>${done.includes(st.id) ? '⭐' : open ? '📖' : '🔒'}</span></button>`; }).join('');
+}
+$('stList').onclick = e => { const b = e.target.closest('.stc'); if (b && !b.disabled) story(+b.dataset.i); };
+function story(i) {
+  const st = DD.STORIES[i], d = DINOS.find(x => x.id === st.id); ST = { st, heard: false, done: false };
+  $('stories').hidden = true; $('story').hidden = false; $('rTitle').textContent = d.n; $('rPic').innerHTML = dimg(d);
+  $('rText').innerHTML = st.t.map((t, k) => `<button class="sent" data-k="${k}">${esc(t)}</button>`).join('');
+  $('rQText').textContent = st.q; $('rFeed').textContent = '';
+  $('rAns').innerHTML = st.a.map((a, k) => ({ a, k })).sort(() => Math.random() - 0.5).map(x => `<button data-k="${x.k}">${esc(x.a)}</button>`).join('');
+  $('rBox').scrollTop = 0; say('Прочитай историю. Если трудно — нажми на предложение, и я прочитаю.', 0.9);
+}
+$('rText').onclick = e => { const b = e.target.closest('.sent'); if (!b) return; ST.heard = true; document.querySelectorAll('.sent.on').forEach(x => x.classList.remove('on')); b.classList.add('on'); say(ST.st.t[+b.dataset.k], 0.85); };
+$('rAns').onclick = e => {
+  const b = e.target.closest('button'); if (!b || ST.done) return;
+  if (+b.dataset.k !== 0) { b.classList.remove('no'); void b.offsetWidth; b.classList.add('no'); $('rFeed').textContent = 'Не то. Перечитай историю — ответ там!'; say('Не то. Перечитай историю — ответ там!', 0.9); return; }
+  ST.done = true; b.classList.add('yes'); chime(); leaves();
+  const self = !ST.heard, r = readIds(); if (!r.includes(ST.st.id)) { r.push(ST.st.id); ls('dp_read', JSON.stringify(r)); }
+  const t = `Правильно! ${self ? '⭐ Ты прочитал историю сам!' : pick(PRAISE)}`; $('rFeed').textContent = t; say(t.replace('⭐ ', ''), 0.9);
+};
+$('storiesBtn').onclick = storiesOpen;
+$('stBack').onclick = () => { speechSynthesis && speechSynthesis.cancel(); park(); };
+$('rBack').onclick = () => { speechSynthesis && speechSynthesis.cancel(); storiesOpen(); };
 
 // ─── первый запуск: имя (хранится только на телефоне) ───
 $('nameOk').onclick = () => { const n = $('nameIn').value.trim().slice(0, 14); ls('dp_name', n); $('hi').hidden = true; audio(); park(); say(`Привет${n ? ', ' + n : ''}! Ты палеонтолог. Пойдём на раскопки!`); };
