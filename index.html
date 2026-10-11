@@ -26,7 +26,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:0}
 .pd img,.di{display:block;width:100%;height:auto;-webkit-user-drag:none;pointer-events:none}
 .pd{-webkit-touch-callout:none}
 .pd .flip{transform-origin:50% 100%}
-.pd.walk img{transform-origin:50% 100%;animation:waddle .42s ease-in-out infinite alternate}
+.pd.walk svg,.pd.walk img{transform-origin:50% 100%;animation:waddle .42s ease-in-out infinite alternate}
 @keyframes waddle{from{transform:rotate(-1.6deg) translateY(0)}to{transform:rotate(1.6deg) translateY(-3%)}}
 .pd.fly img{animation:glide 1.4s ease-in-out infinite alternate}
 .pd.swim img{animation:bob 2.4s ease-in-out infinite alternate;-webkit-mask-image:linear-gradient(#000 60%,transparent 90%);mask-image:linear-gradient(#000 60%,transparent 90%)}   /* низ «под водой» */
@@ -103,6 +103,17 @@ button{font:inherit;color:inherit;cursor:pointer;border:0}
 .ans:active{transform:translateY(4px)}
 #pFeed{margin-top:auto;padding:14px;border-radius:22px;background:rgba(255,250,240,.96);text-align:center}
 #pFeed[hidden]{display:none}
+.pd.boy svg{display:block;width:100%;height:auto;filter:drop-shadow(0 3px 3px rgba(0,0,0,.3))}
+#wdBox{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top) + 66px);bottom:0;display:flex;flex-direction:column;align-items:center;gap:12px;padding:0 12px calc(env(safe-area-inset-bottom) + 12px);z-index:3}
+#wdBoy{flex:1;min-height:0;display:flex;align-items:flex-end;justify-content:center}
+#wdBoy svg{height:min(38dvh,320px);width:auto;filter:drop-shadow(0 6px 6px rgba(0,0,0,.3))}
+#wdTabs{display:flex;gap:5px;flex-wrap:wrap;justify-content:center}
+#wdTabs button{width:43px;height:46px;border-radius:14px;background:rgba(255,255,255,.75);font-size:24px}
+#wdTabs button.on{background:#fff;box-shadow:0 0 0 3px #ffb347}
+#wdItems{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;max-width:440px;min-height:150px;align-content:start}
+#wdItems button{padding:8px 4px;border-radius:16px;background:#fffaf0;font-weight:900;font-size:15px;line-height:1.15;box-shadow:0 4px 0 #d8c7a6;display:flex;flex-direction:column;align-items:center;gap:2px}
+#wdItems button b{font-size:28px;line-height:1.1}#wdItems button small{font-size:13px;color:#8a6d3b}
+#wdItems button.on{background:#bff0c5;box-shadow:0 4px 0 #6bbf74}#wdItems button.lock{opacity:.6}
 #stars{display:inline-block;margin-top:6px;padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.85);font-weight:800;font-size:14px}
 .bd{position:absolute;transform:translateX(-50%);filter:drop-shadow(0 4px 3px rgba(0,0,0,.3));z-index:5;cursor:pointer;-webkit-touch-callout:none}
 .bd img{display:block;width:100%;height:auto;pointer-events:none;-webkit-user-drag:none}
@@ -259,6 +270,10 @@ h2{margin:6px 0;font-size:26px}
     <div id="wFeed" hidden><div id="wFeedText"></div><button class="go" id="wNext">Дальше ▶</button></div>
   </div>
 </div>
+<div class="scr game" id="ward" hidden>
+  <div class="gtop"><button class="round" id="wdBack" aria-label="В парк">🌴</button><div class="gpill" id="wdStars"></div><div style="width:48px"></div></div>
+  <div id="wdBox"><div id="wdBoy"></div><div id="wdTabs"></div><div id="wdItems"></div></div>
+</div>
 <div class="scr game" id="prof" hidden>
   <div class="gtop"><button class="round" id="pBack" aria-label="В парк">🌴</button><div class="gpill" id="pScore"></div></div>
   <div id="pBox">
@@ -279,6 +294,7 @@ h2{margin:6px 0;font-size:26px}
     <button class="gtile" id="sizeBtn"><b>📏</b>Я и динозавры<small>кто больше?</small></button>
     <button class="gtile" id="sentBtn"><b>🧩</b>Собери фразу<small>слова по порядку</small></button>
     <button class="gtile" id="goldBtn"><b>✨</b>Золотые раскопки<small>имя без подсказок</small></button>
+    <button class="gtile" id="wardBtn"><b>👕</b>Гардероб<small>наряди палеонтолога</small></button>
   </div>
   <button class="go" id="gamesClose">Назад</button>
 </div></div>
@@ -347,6 +363,7 @@ h2{margin:6px 0;font-size:26px}
 
 <script src="data.js"></script>
 <script src="logic.js"></script>
+<script src="boy.js"></script>
 <script src="game.js"></script>
 </body>
 </html>

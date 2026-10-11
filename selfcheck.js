@@ -1,7 +1,7 @@
 // node selfcheck.js — слоги складываются в имя, карточки содержат все нужные слоги, факты на месте
 'use strict';
 const assert = require('assert');
-require('./data.js'); require('./logic.js');
+require('./data.js'); require('./logic.js'); require('./boy.js');
 const { DINOS } = DD;
 assert.strictEqual(new Set(DINOS.map(d => d.id)).size, DINOS.length, 'id без повторов');
 for (const [k, d] of DINOS.entries()) {
@@ -59,4 +59,11 @@ assert.strictEqual(DL.compare(DINOS.find(d => d.id === 'compy'), 120).k, 0);
 assert(DL.compare(DINOS.find(d => d.id === 'ptera'), 120).text.startsWith('Размах крыльев птеранодона'));
 // истории: про известных динозавров, 3–4 предложения, три разных ответа
 for (const st of DD.STORIES) { assert(DINOS.some(d => d.id === st.id) && st.t.length >= 3 && st.t.length <= 4 && st.a.length === 3 && new Set(st.a).size === 3, st.id + ': история'); }
+// гардероб: id без повторов, слоты известные, стартовые вещи бесплатны, пороги звёзд не совпадают (иначе одно сообщение о двух вещах); каждая вещь рисуется
+const IT = BOY.ITEMS, SL = BOY.SLOTS.map(x => x[0]);
+assert.strictEqual(new Set(IT.map(x => x.id)).size, IT.length); assert(IT.every(x => SL.includes(x.slot) && x.svg && x.n));
+assert(Object.entries(BOY.START).every(([s, id]) => BOY.it(id).slot === s && BOY.it(id).need === 0));
+const paid = IT.filter(x => x.need > 0).map(x => x.need); assert.strictEqual(new Set(paid).size, paid.length, 'пороги звёзд разные');
+for (const x of IT) { const o = { ...BOY.START, [x.slot]: x.id }, g = BOY.svg(o); assert(g.startsWith('<svg') && g.includes(x.svg.slice(0, 30)), x.n + ': рисуется'); }
+assert(require('fs').readFileSync(__dirname + '/sw.js', 'utf8').includes("'boy.js'"), 'boy.js в кэше');
 console.log('ВСЁ ОК');

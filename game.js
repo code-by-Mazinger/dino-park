@@ -42,7 +42,8 @@ for (const ev of ['pointerdown', 'touchend']) addEventListener(ev, audio, { pass
 let found = Math.min(DINOS.length, +ls('dp_found') || 0);                            // сколько динозавров уже в парке (по порядку)
 const name = () => ls('dp_name') || '';
 let stars = +ls('dp_stars') || 0, newB = -1;                                        // звёзды «прочитал сам» копятся на постройки в парке
-function addStar() { const was = DL.build(stars).n; ls('dp_stars', ++stars); if (DL.build(stars).n === was) return null; newB = was; return DD.BUILDS[was]; }
+function addStar() { const was = DL.build(stars).n; ls('dp_stars', ++stars);
+  const nw = BOY.ITEMS.find(x => x.need === stars); if (nw) setTimeout(() => toast(`👕 В гардеробе новая вещь: ${nw.n}!`, 3500), 1500); if (DL.build(stars).n === was) return null; newB = was; return DD.BUILDS[was]; }
 const built = b => b ? ` 🏗️ В парке появилось: ${b[1]}!` : '';
 let train = +ls('dp_train') || 0;                                                    // тренировок по самбо (отмечает взрослый)
 const today = () => new Date().toDateString();
@@ -50,7 +51,7 @@ const today = () => new Date().toDateString();
 // ─── парк: динозавры гуляют, птеранодон летает ───
 let walkers = [], last = performance.now();
 function park(fresh = -1) {
-  $('park').hidden = false; $('dig').hidden = true; ['hungry', 'prof', 'size', 'stories', 'story', 'sent', 'gamesSheet'].forEach(id => $(id).hidden = true); if (HG) HG.done = true;
+  $('park').hidden = false; $('dig').hidden = true; ['hungry', 'prof', 'size', 'stories', 'story', 'sent', 'ward', 'gamesSheet'].forEach(id => $(id).hidden = true); if (HG) HG.done = true;
   $('hello').textContent = name() ? `Палеонтолог ${name()}` : '';
   $('count').textContent = found >= DINOS.length ? `Все ${DINOS.length} динозавров найдены! 🏆` : `🦕 В парке: ${found} из ${DINOS.length}`;
   const next = DINOS[Math.min(found, DINOS.length - 1)];
@@ -80,6 +81,9 @@ function park(fresh = -1) {
     el.onclick = () => card(d, true); box.appendChild(el);
     walkers.push({ el, w, lo: -w * 0.2, hi: W - w * 0.8, x: Math.random() * (W - w), dir: Math.random() < 0.5 ? -1 : 1, v: 26 + Math.random() * 14, rest: 0, flyer: false });
   });
+  const bw = k * 0.15, be = document.createElement('div');                          // палеонтолог в своём наряде
+  be.className = 'pd boy'; be.innerHTML = `<div class="flip">${BOY.svg(outfit())}</div>`; be.style.width = bw + 'px'; be.style.bottom = H * 0.2 + 'px'; be.style.zIndex = 15; be.onclick = wardOpen; box.appendChild(be);
+  walkers.push({ el: be, w: bw, lo: 0, hi: W - bw, x: W * 0.35, dir: 1, v: 22, rest: 0, flyer: false });
   const B = DL.build(stars), BX = [0.1, 0.84, 0.34, 0.59, 0.22, 0.47, 0.71, 0.93];    // постройки у края поляны, за динозаврами; 5-я и дальше — второй ряд, мельче, в промежутках первого
   $('stars').textContent = B.next ? `⭐ ${stars} · ещё ${B.left} до ${B.next[0]}` : `⭐ ${stars} · парк построен 🏆`;
   DD.BUILDS.slice(0, B.n).forEach(([, n, id], i) => { const el = document.createElement('div'); el.className = 'bd' + (i > 3 ? ' far' : '') + (i === newB ? ' new' : ''); el.innerHTML = `<img src="builds/${id}.webp" alt="${n}" draggable="false">`; el.style.width = k * (i > 3 ? 0.17 : 0.22) + 'px';
@@ -337,7 +341,7 @@ $('gamesSheet').addEventListener('click', e => { if (e.target.closest('.gtile'))
 
 // ─── «Я и динозавры»: ребёнок и динозавр в одном масштабе (рост вводит взрослый) ───
 let sizeI = 0;
-const kidSVG = h => `<svg viewBox="0 0 40 100" height="${h}" width="${h * 0.4}"><circle cx="20" cy="12" r="10" fill="#f2c7a5"/><path d="M8 26 Q20 20 32 26 L34 60 L26 60 L26 100 L21 100 L21 64 L19 64 L19 100 L14 100 L14 60 L6 60 Z" fill="#2f6bff"/><circle cx="16" cy="11" r="1.6" fill="#222"/><circle cx="24" cy="11" r="1.6" fill="#222"/><path d="M15 16 Q20 20 25 16" stroke="#a3344f" stroke-width="1.6" fill="none"/></svg>`;
+const kidSVG = h => BOY.svg(outfit(), h * 200 / 172);                                // в рисунке рост от макушки до пят — 172 из 200
 function sizeOpen() {
   audio(); if (!found) { toast('Сначала найди динозавра на раскопках! 🦴'); return; }
   if (!+ls('dp_cm')) { $('hIn').value = ''; $('hErr').textContent = ''; $('heightAsk').hidden = false; return; }
@@ -348,11 +352,11 @@ async function showSize() {
   const st = $('sStage'), W = st.clientWidth, Hs = st.clientHeight, img = new Image(); img.src = `dinos/${d.id}.webp`;
   try { await img.decode(); } catch (e) {}
   const asp = img.naturalHeight / img.naturalWidth || 0.6, gap = 0.4;
-  const ppm = Math.min((W - 10) / (h * 0.4 + gap + d.len), Hs * 0.9 / (d.len * asp), Hs * 0.9 / h);   // метр → пиксели, чтобы влезли оба
+  const ppm = Math.min((W - 10) / (h * 0.58 + gap + d.len), Hs * 0.9 / (d.len * asp), Hs * 0.9 / h);   // метр → пиксели, чтобы влезли оба
   const kh = h * ppm, dw = d.len * ppm;
   st.querySelectorAll('.kid,.sd').forEach(e => e.remove());
   st.insertAdjacentHTML('beforeend', `<div class="kid" style="left:4px">${kidSVG(kh)}<span>${esc(name() || 'Я')} · ${cm} см</span></div>`
-    + `<div class="sd" style="left:${4 + kh * 0.4 + gap * ppm}px;width:${dw}px">${dimg(d)}</div>`);
+    + `<div class="sd" style="left:${4 + kh * 0.58 + gap * ppm}px;width:${dw}px">${dimg(d)}</div>`);
   const t = DL.compare(d, cm).text; $('sText').textContent = t; say(t, 0.9);
 }
 $('sizeBtn').onclick = sizeOpen;
@@ -428,6 +432,29 @@ $('wSay').onclick = () => { WG.heard = true; say(WG.q[WG.i].t, 0.85); };
 $('wNext').onclick = () => { if (++WG.i < WG.q.length) showW(); else wNew(); };
 $('sentBtn').onclick = sentOpen;
 $('wBack').onclick = () => { speechSynthesis && speechSynthesis.cancel(); park(); };
+
+// ─── Гардероб: вещи открываются звёздами «прочитал сам» (звёзды не тратятся); нажал — надел, ещё раз — снял ───
+const outfit = () => { try { return Object.assign({}, BOY.START, JSON.parse(ls('dp_outfit') || '{}')); } catch (e) { return { ...BOY.START }; } };
+let wdSlot = 'top';
+function wardOpen() {
+  audio(); $('park').hidden = true; $('ward').hidden = false; wardDraw();
+  say('Гардероб палеонтолога! Выбирай, что надеть. Новые вещи открываются звёздами.', 0.9);
+}
+function wardDraw() {
+  const o = outfit(); $('wdBoy').innerHTML = BOY.svg(o); $('wdStars').textContent = `👕 Гардероб · ⭐ ${stars}`;
+  $('wdTabs').innerHTML = BOY.SLOTS.map(([s, e, n]) => `<button data-s="${s}" class="${s === wdSlot ? 'on' : ''}" aria-label="${n}">${e}</button>`).join('');
+  $('wdItems').innerHTML = BOY.ITEMS.filter(x => x.slot === wdSlot).map(x => `<button data-id="${x.id}" class="${x.need > stars ? 'lock' : o[x.slot] === x.id ? 'on' : ''}"><b>${x.e}</b>${esc(x.n)}`
+    + (x.need > stars ? `<small>🔒 ⭐ ${x.need}</small>` : '') + '</button>').join('');
+}
+$('wdTabs').onclick = e => { const b = e.target.closest('button'); if (!b) return; wdSlot = b.dataset.s; wardDraw(); say(b.getAttribute('aria-label'), 0.9); };
+$('wdItems').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return; const x = BOY.it(b.dataset.id), o = outfit();
+  if (x.need > stars) { const n = x.need - stars; say(`${x.n}. Нужно ещё ${n} ${n === 1 ? 'звезда' : n < 5 ? 'звезды' : 'звёзд'}. Читай сам — и откроешь!`, 0.9); return; }
+  if (o[x.slot] === x.id && !BOY.MUST.includes(x.slot)) delete o[x.slot]; else o[x.slot] = x.id;
+  ls('dp_outfit', JSON.stringify(o)); tone(660, 0, 0.25, 0.08); wardDraw(); say(x.n, 0.9);
+};
+$('wardBtn').onclick = wardOpen;
+$('wdBack').onclick = () => { speechSynthesis && speechSynthesis.cancel(); park(); };
 
 // ─── первый запуск: имя (хранится только на телефоне) ───
 $('nameOk').onclick = () => { const n = $('nameIn').value.trim().slice(0, 14); ls('dp_name', n); $('hi').hidden = true; audio(); park(); say(`Привет${n ? ', ' + n : ''}! Ты палеонтолог. Пойдём на раскопки!`); };
