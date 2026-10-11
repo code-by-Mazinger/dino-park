@@ -8,7 +8,7 @@ for (const [k, d] of DINOS.entries()) {
   assert.strictEqual(d.syl.join('').toLowerCase(), d.n.toLowerCase(), d.n + ': слоги = имя');
   assert(d.facts.length >= 3 && d.facts.every(f => f.length < 90), d.n + ': три коротких факта');
   assert(d.wrong.length === 2 && d.wrong.every(t => t.length < 90) && !d.facts.includes(d.wrong[0]), d.n + ': ошибка профессора и поправка');
-  assert(['plants', 'meat', 'fish'].includes(d.diet) && ['юрский', 'меловой'].includes(d.period));
+  assert(['plants', 'meat', 'fish', 'omni'].includes(d.diet) && ['юрский', 'меловой'].includes(d.period));
   for (let s = 1; s <= 20; s++) {
     const t = DL.tiles(k, DL.rng(s));
     assert(d.syl.every(x => t.includes(x)), d.n + ': все слоги есть');
@@ -18,7 +18,10 @@ for (const [k, d] of DINOS.entries()) {
   if (k) assert(d.syl.length >= DINOS[0].syl.length, 'первый — из самых коротких');
 }
 // сначала короткие имена: среди первых пяти нет пятисложных
-assert(DINOS.slice(0, 5).every(d => d.syl.length <= 4) && DINOS.slice(-3).every(d => d.syl.length === 5));
+assert(DINOS.slice(0, 5).every(d => d.syl.length <= 4) && DINOS.slice(12, 15).every(d => d.syl.length === 5));
+// вторая экспедиция: имена не короче предыдущих, у морских — пометка «не динозавр»
+DINOS.slice(16).forEach((d, i) => assert(d.syl.length >= DINOS[15 + i].syl.length, d.n + ': имена от коротких к длинным'));
+DINOS.filter(d => d.swim || d.fly).forEach(d => assert(/не динозавр/.test(d.kind), d.n + ': пометка «не динозавр»'));
 // самбо: пояс, трещины, малыши
 assert.strictEqual(DL.belt(0).name, 'белый'); assert.strictEqual(DL.belt(2).left, 1); assert.strictEqual(DL.belt(3).name, 'жёлтый');
 assert.strictEqual(DL.belt(29).name, 'коричневый'); assert.strictEqual(DL.belt(30).name, 'чёрный'); assert.strictEqual(DL.belt(99).left, 0);
@@ -39,7 +42,7 @@ assert.deepStrictEqual(DL.build(0), { n: 0, next: DD.BUILDS[0], left: 3 }); asse
 assert.strictEqual(DL.build(3).n, 1); assert.strictEqual(DL.build(3).left, 3);
 const all = DD.BUILDS.length * DL.STEP; assert.strictEqual(DL.build(all).next, null); assert.strictEqual(DL.build(all + 7).n, DD.BUILDS.length);
 for (const b of DD.BUILDS) assert(require('fs').existsSync(__dirname + '/builds/' + b[2] + '.webp') && require('fs').readFileSync(__dirname + '/sw.js', 'utf8').includes(`builds/${b[2]}.webp`), b[1] + ': картинка есть и в кэше');
-for (const d of DINOS) assert(require('fs').existsSync(__dirname + '/dinos/' + d.id + '.webp'), d.n + ': есть картинка');
+for (const d of DINOS) assert(require('fs').existsSync(__dirname + '/dinos/' + d.id + '.webp') && require('fs').readFileSync(__dirname + '/sw.js', 'utf8').includes(`dinos/${d.id}.webp`), d.n + ': картинка есть и в кэше');
 // мини-игры: слоги — из имён найденных (не меньше 6), профессор — 8 вопросов только про найденных, верные и ошибки вперемешку
 assert.deepStrictEqual(DL.pool(3), [...new Set(DINOS.slice(0, 3).flatMap(d => d.syl))]);
 assert(DL.pool(0).length >= 6 && DL.pool(1).length >= 6);

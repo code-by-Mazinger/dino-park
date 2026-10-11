@@ -60,22 +60,25 @@ function park(fresh = -1) {
   $('egg').innerHTML = eggSVG(DL.cracks(train)); $('egg').classList.toggle('wob', DL.cracks(train) > 0);
   const box = $('dinos'); box.innerHTML = ''; walkers = [];
   const W = innerWidth, H = innerHeight, k = Math.min(W, 520);                      // ширина «обычного» динозавра — доля этой величины
+  const land = DINOS.slice(0, found).filter(d => !d.fly && !d.swim).length, fit = Math.min(1, Math.sqrt(13 / Math.max(1, land)));   // больше 13 на поляне — все чуть мельче
+  const bk = Math.max(W / 900, H / 1575), bl = (W - 900 * bk) / 2;                  // как park.jpg (900×1575, cover, низ к низу) лёг на экран — чтобы плавать в воде
   DINOS.slice(0, found).forEach((d, i) => {
-    const el = document.createElement('div'), flyer = d.fly, lane = flyer ? 0 : i % 3, depth = [0.6, 0.8, 1][lane];
-    el.className = 'pd' + (flyer ? ' fly' : '') + (i === fresh ? ' new' : '') + (golds().includes(d.id) ? ' gold' : ''); el.innerHTML = `<div class="flip">${dimg(d)}</div>`;
-    const w = k * 0.34 * d.scale * depth; el.style.width = w + 'px';
-    const yb = flyer ? H * 0.68 : H * [0.335, 0.255, 0.165][lane];                 // ноги — на поляне фона: дальние выше и мельче
-    el.style.bottom = yb + 'px'; el.style.zIndex = flyer ? 1 : 10 + lane;
+    const el = document.createElement('div'), flyer = d.fly, swim = d.swim, lane = flyer || swim ? 0 : i % 3, depth = swim ? 0.5 : [0.6, 0.8, 1][lane];
+    el.className = 'pd' + (flyer ? ' fly' : '') + (swim ? ' swim' : '') + (i === fresh ? ' new' : '') + (golds().includes(d.id) ? ' gold' : ''); el.innerHTML = `<div class="flip">${dimg(d)}</div>`;
+    const w = k * 0.34 * d.scale * depth * (flyer || swim ? 1 : fit); el.style.width = w + 'px';
+    const yb = flyer ? H * 0.68 : swim ? 675 * bk : H * [0.335, 0.255, 0.165][lane]; // ноги — на поляне фона: дальние выше и мельче; морские — в воде (вода на фоне: x 500–880, низ ~880)
+    el.style.bottom = yb + 'px'; el.style.zIndex = flyer ? 1 : swim ? 2 : 10 + lane;
+    const lo = swim ? bl + 500 * bk : -w * 0.2, hi = swim ? Math.max(lo, Math.min(bl + 880 * bk, W) - w * 0.9) : W - w * 0.8;
     el.onclick = () => card(d);
     box.appendChild(el);
-    walkers.push({ el, w, x: i === fresh ? W * 0.6 : Math.random() * (W - w), dir: Math.random() < 0.5 ? -1 : 1, v: (flyer ? 60 : 18 + Math.random() * 16) * depth, rest: 0, flyer });
+    walkers.push({ el, w, lo, hi, x: swim ? lo + Math.random() * (hi - lo) : i === fresh ? W * 0.6 : Math.random() * (W - w), dir: Math.random() < 0.5 ? -1 : 1, v: (flyer ? 60 : swim ? 30 : 18 + Math.random() * 16) * depth, rest: 0, flyer: flyer || swim });
   });
   DL.babies(train).forEach((id, i, all) => {                                           // малыши из яйца — маленькие, впереди, прыгают
     const d = DINOS.find(x => x.id === id), el = document.createElement('div');
     el.className = 'pd baby' + (fresh === 'baby' && i === all.length - 1 ? ' new' : ''); el.innerHTML = `<div class="flip">${dimg(d)}</div>`;
     const w = k * 0.15; el.style.width = w + 'px'; el.style.bottom = H * 0.15 + (i % 2) * 14 + 'px'; el.style.zIndex = 14;
     el.onclick = () => card(d, true); box.appendChild(el);
-    walkers.push({ el, w, x: Math.random() * (W - w), dir: Math.random() < 0.5 ? -1 : 1, v: 26 + Math.random() * 14, rest: 0, flyer: false });
+    walkers.push({ el, w, lo: -w * 0.2, hi: W - w * 0.8, x: Math.random() * (W - w), dir: Math.random() < 0.5 ? -1 : 1, v: 26 + Math.random() * 14, rest: 0, flyer: false });
   });
   const B = DL.build(stars), BX = [0.1, 0.84, 0.34, 0.59, 0.22, 0.47, 0.71, 0.93];    // постройки у края поляны, за динозаврами; 5-я и дальше — второй ряд, мельче, в промежутках первого
   $('stars').textContent = B.next ? `⭐ ${stars} · ещё ${B.left} до ${B.next[0]}` : `⭐ ${stars} · парк построен 🏆`;
@@ -97,7 +100,7 @@ function step(now) {
   if (!$('park').hidden) for (const a of walkers) {
     if (a.rest > 0) { a.rest -= dt; a.el.classList.remove('walk'); }
     else { a.x += a.dir * a.v * dt; a.el.classList.toggle('walk', !a.flyer);
-      if (a.x < -a.w * 0.2 || a.x > innerWidth - a.w * 0.8) { a.dir *= -1; a.x = Math.max(-a.w * 0.2, Math.min(innerWidth - a.w * 0.8, a.x)); }
+      if (a.x < a.lo || a.x > a.hi) { a.dir *= -1; a.x = Math.max(a.lo, Math.min(a.hi, a.x)); }
       if (!a.flyer && Math.random() < dt * 0.15) a.rest = 1.5 + Math.random() * 2.5; }
     a.el.style.transform = `translateX(${a.x}px)`; a.el.firstChild.style.transform = `scaleX(${a.dir})`;
   }
@@ -108,7 +111,7 @@ function step(now) {
 function card(d, baby = false) {
   audio(); $('cPic').innerHTML = dimg(d);
   $('cName').innerHTML = d.syl.map(s => `<button data-s="${s}">${s}</button>`).join('') + `<button class="all" data-all="1">🔊</button>`;
-  $('cType').textContent = (d.kind ? d.kind + ' · ' : '') + { plants: 'Ел растения 🌿', meat: 'Хищник 🍖', fish: 'Ел рыбу 🐟' }[d.diet] + ` · жил в ${{ юрский: 'юрском', меловой: 'меловом' }[d.period]} периоде`;
+  $('cType').textContent = (d.kind ? d.kind + ' · ' : '') + { plants: 'Ел растения 🌿', meat: 'Хищник 🍖', fish: 'Ел рыбу 🐟', omni: 'Что ел — учёные спорят 🤔' }[d.diet] + ` · жил в ${{ юрский: 'юрском', меловой: 'меловом' }[d.period]} периоде`;
   $('cFacts').innerHTML = d.facts.map((f, i) => `<button class="fact" data-f="${i}"><b>🔊</b>${esc(f)}</button>`).join('');
   $('cName').onclick = e => { const b = e.target.closest('button'); if (!b) return; say(b.dataset.all ? d.n : b.dataset.s, 0.7); };
   $('cFacts').onclick = e => { const b = e.target.closest('.fact'); if (b) say(d.facts[+b.dataset.f], 0.9); };
@@ -131,13 +134,14 @@ function dig(gold = false) {
   audio(); goldRun = gold; hinted = false;
   if (gold) { const g = golds(), left = DINOS.slice(0, found).map((d, i) => i).filter(i => !g.includes(DINOS[i].id)); cur = left.length ? pick(left) : Math.floor(Math.random() * found); }
   else cur = found < DINOS.length ? found : Math.floor(Math.random() * DINOS.length);
-  const d = DINOS[cur]; $('park').hidden = true; $('dig').hidden = false; $('task').hidden = true; $('done').hidden = true;
+  const d = DINOS[cur]; $('dig').classList.toggle('long', d.syl.length >= 5);   // длинное имя — компактнее яма и карточки, иначе на маленьком экране не влезает
+  $('park').hidden = true; $('dig').hidden = false; $('task').hidden = true; $('done').hidden = true;
   $('fossil').className = ''; $('fossil').innerHTML = dimg(d, 'sil'); $('bar').style.visibility = '';
   const c = $('sand'); c.style.display = ''; c.style.opacity = 1;                    // сначала показать слой, потом мерить (иначе 0×0 и песка нет)
   const r = c.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1);
   c.width = r.width * dpr; c.height = r.height * dpr; sandCtx = c.getContext('2d'); sandCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
   layer = 0; cleared = false; brushN = 0; fillLayer();
-  say(gold ? 'Золотая раскопка! Счищай песок.' : found < DINOS.length ? 'Кто-то прячется в земле! Счищай песок со всего квадрата.' : 'Раскопай ещё раз!');
+  say(gold ? 'Золотая раскопка! Счищай песок.' : found === 15 ? 'Вторая экспедиция! Здесь прячутся новые находки — даже морские ящеры. Счищай песок!' : found < DINOS.length ? 'Кто-то прячется в земле! Счищай песок со всего квадрата.' : 'Раскопай ещё раз!');
 }
 function fillLayer() {
   const c = $('sand'), r = c.getBoundingClientRect(), L = LAYERS[layer];
@@ -252,7 +256,7 @@ $('digBack').onclick = () => { speechSynthesis && speechSynthesis.cancel(); park
 let HG = null;
 const LANES = [22, 50, 78];
 function hungry() {
-  audio(); const ds = DINOS.slice(0, Math.max(1, found)).filter(d => !d.fly), d = pick(ds.length ? ds : [DINOS[0]]);
+  audio(); const ds = DINOS.slice(0, Math.max(1, found)).filter(d => !d.fly && !d.swim), d = pick(ds.length ? ds : [DINOS[0]]);
   $('park').hidden = true; $('hungry').hidden = false; $('hDone').hidden = true; $('falls').innerHTML = ''; $('eaterImg').innerHTML = dimg(d);
   HG = { pool: DL.pool(found), eaten: 0, cards: [], spawn: 0.2, misses: 0, earMiss: 0, d, done: false, target: '', tut: !ls('dp_htut') };
   nextTarget();

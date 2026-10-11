@@ -29,6 +29,8 @@ button{font:inherit;color:inherit;cursor:pointer;border:0}
 .pd.walk img{transform-origin:50% 100%;animation:waddle .42s ease-in-out infinite alternate}
 @keyframes waddle{from{transform:rotate(-1.6deg) translateY(0)}to{transform:rotate(1.6deg) translateY(-3%)}}
 .pd.fly img{animation:glide 1.4s ease-in-out infinite alternate}
+.pd.swim img{animation:bob 2.4s ease-in-out infinite alternate;-webkit-mask-image:linear-gradient(#000 60%,transparent 90%);mask-image:linear-gradient(#000 60%,transparent 90%)}   /* низ «под водой» */
+@keyframes bob{to{transform:translateY(5%) rotate(1.5deg)}}
 @keyframes glide{from{transform:translateY(0) rotate(-2deg)}to{transform:translateY(-14%) rotate(2deg)}}
 .di.fossil{filter:grayscale(1) sepia(.35) brightness(1.5) contrast(.75) drop-shadow(0 2px 2px rgba(80,50,20,.5))}
 .di.shadow{filter:brightness(0) opacity(.78)}
@@ -179,6 +181,9 @@ button{font:inherit;color:inherit;cursor:pointer;border:0}
 .slot.ok{background:#fff6dc;border:3px solid #ffb347;color:var(--ink)}
 #tiles{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:440px}
 .tile{min-width:64px;height:56px;padding:0 12px;border-radius:16px;background:var(--card);font-weight:900;font-size:27px;box-shadow:0 5px 0 #c9a26a;letter-spacing:.02em}
+#dig.long #pit{height:min(28dvh,62vw)}#dig.long #slots{gap:4px}
+#dig.long .slot{min-width:44px;height:44px;padding:0 6px;font-size:20px;border-radius:12px}
+#dig.long .tile{min-width:54px;height:48px;padding:0 9px;font-size:23px}
 .tile:active{transform:translateY(3px);box-shadow:0 2px 0 #c9a26a}
 .tile.used{visibility:hidden}
 .tile.no{animation:no .4s}
