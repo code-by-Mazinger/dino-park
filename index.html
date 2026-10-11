@@ -105,6 +105,8 @@ button{font:inherit;color:inherit;cursor:pointer;border:0}
 .bd{position:absolute;transform:translateX(-50%);filter:drop-shadow(0 4px 3px rgba(0,0,0,.3));z-index:5;cursor:pointer;-webkit-touch-callout:none}
 .bd img{display:block;width:100%;height:auto;pointer-events:none;-webkit-user-drag:none}
 .bd.far{z-index:4}
+.pd.gold img{filter:drop-shadow(0 0 3px #fff3b0) drop-shadow(0 0 8px #ffd23f)}
+.pd.gold::after{content:'✨';position:absolute;left:50%;top:-6px;transform:translateX(-50%);font-size:24px;pointer-events:none}
 .bd.new{animation:pop .9s cubic-bezier(.3,1.6,.6,1)}
 .gsheet .gtile:last-child:nth-child(odd){grid-column:span 2}
 #wBox{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top) + 70px);bottom:0;padding:0 14px calc(env(safe-area-inset-bottom) + 14px);display:flex;flex-direction:column;gap:14px;z-index:3}
@@ -271,6 +273,7 @@ h2{margin:6px 0;font-size:26px}
     <button class="gtile" id="storiesBtn"><b>📖</b>Дино-истории<small>читаем рассказ</small></button>
     <button class="gtile" id="sizeBtn"><b>📏</b>Я и динозавры<small>кто больше?</small></button>
     <button class="gtile" id="sentBtn"><b>🧩</b>Собери фразу<small>слова по порядку</small></button>
+    <button class="gtile" id="goldBtn"><b>✨</b>Золотые раскопки<small>имя без подсказок</small></button>
   </div>
   <button class="go" id="gamesClose">Назад</button>
 </div></div>

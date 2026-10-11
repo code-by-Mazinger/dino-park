@@ -62,7 +62,7 @@ function park(fresh = -1) {
   const W = innerWidth, H = innerHeight, k = Math.min(W, 520);                      // ширина «обычного» динозавра — доля этой величины
   DINOS.slice(0, found).forEach((d, i) => {
     const el = document.createElement('div'), flyer = d.fly, lane = flyer ? 0 : i % 3, depth = [0.6, 0.8, 1][lane];
-    el.className = 'pd' + (flyer ? ' fly' : '') + (i === fresh ? ' new' : ''); el.innerHTML = `<div class="flip">${dimg(d)}</div>`;
+    el.className = 'pd' + (flyer ? ' fly' : '') + (i === fresh ? ' new' : '') + (golds().includes(d.id) ? ' gold' : ''); el.innerHTML = `<div class="flip">${dimg(d)}</div>`;
     const w = k * 0.34 * d.scale * depth; el.style.width = w + 'px';
     const yb = flyer ? H * 0.68 : H * [0.335, 0.255, 0.165][lane];                 // ноги — на поляне фона: дальние выше и мельче
     el.style.bottom = yb + 'px'; el.style.zIndex = flyer ? 1 : 10 + lane;
@@ -112,6 +112,7 @@ function card(d, baby = false) {
   $('cFacts').innerHTML = d.facts.map((f, i) => `<button class="fact" data-f="${i}"><b>🔊</b>${esc(f)}</button>`).join('');
   $('cName').onclick = e => { const b = e.target.closest('button'); if (!b) return; say(b.dataset.all ? d.n : b.dataset.s, 0.7); };
   $('cFacts').onclick = e => { const b = e.target.closest('.fact'); if (b) say(d.facts[+b.dataset.f], 0.9); };
+  if (!baby && golds().includes(d.id)) $('cType').textContent = '✨ Золотая находка · ' + $('cType').textContent;
   if (baby) $('cType').textContent = 'Малыш! Вылупился, потому что ты ходил на самбо 🥋 · ' + $('cType').textContent;
   $('card').hidden = false; say(baby ? 'Малыш ' + d.n.toLowerCase() + 'а' : d.n);
 }
@@ -124,15 +125,19 @@ const digImg = new Image(); digImg.src = 'dig.jpg';
 const LAYERS = [{ fill: null, under: '#a8743f', stage: 'sil', say: 'Ого! Видно силуэт. Остался последний слой!' },
   { fill: '#a8743f', under: '#9a6a3a', stage: 'fossil', say: '' }];
 let cur = 0, sandCtx = null, brushN = 0, cleared = false, need = [], pos = 0, misses = 0, layer = 0;
-function dig() {
-  audio(); cur = found < DINOS.length ? found : Math.floor(Math.random() * DINOS.length);
+let goldRun = false, hinted = false;                                                // золотая раскопка: имя без голоса; 🔊 или подсветка — без золота
+const golds = () => readIds('dp_gold');
+function dig(gold = false) {
+  audio(); goldRun = gold; hinted = false;
+  if (gold) { const g = golds(), left = DINOS.slice(0, found).map((d, i) => i).filter(i => !g.includes(DINOS[i].id)); cur = left.length ? pick(left) : Math.floor(Math.random() * found); }
+  else cur = found < DINOS.length ? found : Math.floor(Math.random() * DINOS.length);
   const d = DINOS[cur]; $('park').hidden = true; $('dig').hidden = false; $('task').hidden = true; $('done').hidden = true;
   $('fossil').className = ''; $('fossil').innerHTML = dimg(d, 'sil'); $('bar').style.visibility = '';
   const c = $('sand'); c.style.display = ''; c.style.opacity = 1;                    // сначала показать слой, потом мерить (иначе 0×0 и песка нет)
   const r = c.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1);
   c.width = r.width * dpr; c.height = r.height * dpr; sandCtx = c.getContext('2d'); sandCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
   layer = 0; cleared = false; brushN = 0; fillLayer();
-  say(found < DINOS.length ? 'Кто-то прячется в земле! Счищай песок со всего квадрата.' : 'Раскопай ещё раз!');
+  say(gold ? 'Золотая раскопка! Счищай песок.' : found < DINOS.length ? 'Кто-то прячется в земле! Счищай песок со всего квадрата.' : 'Раскопай ещё раз!');
 }
 function fillLayer() {
   const c = $('sand'), r = c.getBoundingClientRect(), L = LAYERS[layer];
@@ -170,27 +175,32 @@ function nameTask() {
   const d = DINOS[cur]; need = d.syl; pos = 0; misses = 0;
   $('slots').innerHTML = need.map((_, i) => `<div class="slot${i ? '' : ' cur'}"></div>`).join('');
   $('tiles').innerHTML = DL.tiles(cur).map(s => `<button class="tile" data-s="${s}">${s}</button>`).join('');
-  $('task').hidden = false; $('digHint').textContent = 'Собери его имя!';
-  say('Собери его имя. Найди слог: ' + need[0], 0.8);
+  $('task').hidden = false; $('digHint').textContent = goldRun ? '✨ Собери имя сам — без подсказок!' : 'Собери его имя!';
+  say(goldRun ? 'Собери его имя сам. Я не подсказываю! Получится — будет золотая находка.' : 'Собери его имя. Найди слог: ' + need[0], 0.8);
 }
-$('say').onclick = () => say(need[pos], 0.7);
+$('say').onclick = () => { if (goldRun) hinted = true; say(need[pos], 0.7); };
 $('tiles').onclick = e => {
   const b = e.target.closest('.tile'); if (!b || b.classList.contains('used') || pos >= need.length) return;
   if (b.dataset.s === need[pos]) {
     b.classList.add('used'); const sl = $('slots').children[pos]; sl.textContent = need[pos]; sl.className = 'slot ok'; tone(659 + pos * 80, 0, 0.4, 0.1);
     pos++; misses = 0; document.querySelectorAll('.tile.hint').forEach(t => t.classList.remove('hint'));
-    if (pos < need.length) { $('slots').children[pos].classList.add('cur'); setTimeout(() => say(need[pos], 0.75), 350); }
+    if (pos < need.length) { $('slots').children[pos].classList.add('cur'); if (!goldRun) setTimeout(() => say(need[pos], 0.75), 350); }
     else setTimeout(alive, 500);
   } else {
-    b.classList.remove('no'); void b.offsetWidth; b.classList.add('no'); say(need[pos], 0.7);
-    if (++misses >= 2) [...$('tiles').children].find(t => !t.classList.contains('used') && t.dataset.s === need[pos])?.classList.add('hint');   // подсказка после двух промахов
+    b.classList.remove('no'); void b.offsetWidth; b.classList.add('no'); say(goldRun ? 'Не тот слог' : need[pos], 0.7);
+    if (++misses >= 2 && goldRun) hinted = true;
+    if (misses >= 2) [...$('tiles').children].find(t => !t.classList.contains('used') && t.dataset.s === need[pos])?.classList.add('hint');   // подсказка после двух промахов
   }
 };
 function alive() {
   const d = DINOS[cur], isNew = cur === found && found < DINOS.length;
   $('task').hidden = true; $('fossil').className = 'alive'; $('fossil').innerHTML = dimg(d);
-  roar(); setTimeout(() => say(d.n + '! ' + pick(PRAISE)), 700);
-  $('doneName').textContent = d.n; $('donePraise').textContent = isNew ? `Новый динозавр в парке! ${pick(PRAISE)}` : pick(PRAISE); $('done').hidden = false; $('digHint').textContent = '';
+  roar(); setTimeout(() => say(d.n + '! ' + (goldRun && !hinted ? 'Золотая находка! Ты прочитал имя сам!' : pick(PRAISE))), 700);
+  let praise = isNew ? `Новый динозавр в парке! ${pick(PRAISE)}` : pick(PRAISE);
+  if (goldRun) { const g = golds(), first = !hinted && !g.includes(d.id);
+    if (first) { g.push(d.id); ls('dp_gold', JSON.stringify(g)); }
+    praise = hinted ? 'Почти! Собери имя без подсказок — и будет золотая находка.' : '✨ Золотая находка! Ты прочитал имя сам!' + (first ? ' +1 звезда в парк!' + built(addStar()) : ''); }
+  $('doneName').textContent = d.n; $('donePraise').textContent = praise; $('done').hidden = false; $('digHint').textContent = '';
   leaves();
   if (isNew) { found++; ls('dp_found', found); }
   $('toPark').onclick = () => { speechSynthesis && speechSynthesis.cancel(); park(isNew ? found - 1 : -1); };
@@ -198,7 +208,8 @@ function alive() {
 function leaves() { for (let i = 0; i < 26; i++) { const l = document.createElement('div'); l.className = 'leaf'; l.textContent = pick(['🍃', '🌿', '⭐', '🦴']);
   l.style.left = Math.random() * 100 + 'vw'; l.style.top = '-30px'; l.style.setProperty('--dx', (Math.random() * 120 - 60) + 'px'); l.style.animationDelay = Math.random() * 0.6 + 's';
   document.body.appendChild(l); setTimeout(() => l.remove(), 3200); } }
-$('digBtn').onclick = dig;
+$('digBtn').onclick = () => dig();
+$('goldBtn').onclick = () => { if (!found) { toast('Сначала найди динозавра на раскопках! 🦴'); return; } dig(true); };
 
 // ─── самбо: яйцо трескается от тренировок, три — вылупляется малыш; отмечает взрослый (вопрос на умножение) ───
 function eggSVG(c, open = false) {
