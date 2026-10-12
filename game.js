@@ -45,7 +45,8 @@ let stars = +ls('dp_stars') || 0, newB = -1;                                    
 function addStar() { const was = DL.build(stars).n; ls('dp_stars', ++stars);
   const nw = BOY.ITEMS.find(x => x.need === stars); if (nw) setTimeout(() => toast(`👕 В гардеробе новая вещь: ${nw.n}!`, 3500), 1500); if (DL.build(stars).n === was) return null; newB = was; return DD.BUILDS[was]; }
 const built = b => b ? ` 🏗️ В парке появилось: ${b[1]}!` : '';
-let train = +ls('dp_train') || 0;                                                    // тренировок по самбо (отмечает взрослый)
+let train = +ls('dp_train') || 0;
+const logEv = e => { let v = []; try { v = JSON.parse(ls('dp_ev') || '[]'); } catch (x) {} v.push(e); ls('dp_ev', JSON.stringify(v.slice(-10))); };   // для писем от динозавров                                                    // тренировок по самбо (отмечает взрослый)
 const today = () => new Date().toDateString();
 
 // ─── парк: динозавры гуляют, птеранодон летает ───
@@ -57,7 +58,7 @@ function park(fresh = -1) {
   if (found <= PV1) pv = 0;
   $('park').classList.toggle('v2', pv === 1); $('pvBtn').hidden = found <= PV1;
   $('pvBtn').className = pv ? 'l' : 'r'; $('pvBtn').textContent = pv ? '◀ Парк' : 'Долина ▶';
-  $('park').hidden = false; $('dig').hidden = true; ['hungry', 'prof', 'size', 'stories', 'story', 'sent', 'ward', 'mus', 'moves', 'gamesSheet'].forEach(id => $(id).hidden = true); if (HG) HG.done = true;
+  $('park').hidden = false; $('dig').hidden = true; mailBadge(); nightSet(); ['hungry', 'prof', 'size', 'stories', 'story', 'sent', 'ward', 'mus', 'moves', 'gamesSheet'].forEach(id => $(id).hidden = true); if (HG) HG.done = true;
   $('hello').textContent = (name() ? `Палеонтолог ${name()}` : '') + (pv ? ' · Долина экспедиции' : '');
   $('count').textContent = found >= DINOS.length ? `Все ${DINOS.length} динозавров найдены! 🏆` : `🦕 В парке: ${found} из ${DINOS.length}`;
   const next = DINOS[Math.min(found, DINOS.length - 1)];
@@ -96,8 +97,59 @@ function park(fresh = -1) {
   $('stars').textContent = B.next ? `⭐ ${stars} · ещё ${B.left} до ${B.next[0]}` : `⭐ ${stars} · парк построен 🏆`;
   DD.BUILDS.slice(0, pv ? 0 : B.n).forEach(([, n, id], i) => { const el = document.createElement('div'); el.className = 'bd' + (i > 3 ? ' far' : '') + (i === newB ? ' new' : ''); el.innerHTML = `<img src="builds/${id}.webp" alt="${n}" draggable="false">`; el.style.width = k * (i > 3 ? 0.17 : 0.22) + 'px';
     el.style.left = BX[i] * 100 + '%'; el.style.bottom = H * (i > 3 ? 0.405 : 0.345) + 'px'; el.onclick = id === 'museum' ? museum : () => say(n, 0.9); box.appendChild(el); });
+  if (night() && ls('dp_tale') === nightKey()) sleepAll();
   if (newB >= 0) { const n = DD.BUILDS[newB][1]; newB = -1; setTimeout(() => { leaves(); say('В парке новая постройка: ' + n + '!', 0.9); }, 500); }
 }
+// ─── Письма от динозавров: раз в день, по последнему событию; прочитал сам и угадал, кто написал, — звезда ───
+const jget = (k, d) => { try { return JSON.parse(ls(k) || 'null') ?? d; } catch (e) { return d; } };
+function mailToday() {
+  let m = jget('dp_mail', null); if (!found) return null;
+  if (!m || m.date !== today()) { const ev = jget('dp_ev', []); ls('dp_ev', '[]');
+    m = { date: today(), ...DL.letter(ev.slice(-1)[0] || null, { name: name(), found, babies: DL.babies(train) }), read: false, done: false, heard: false }; ls('dp_mail', JSON.stringify(m)); }
+  return m;
+}
+function mailBadge() { const m = mailToday(); $('mailBtn').hidden = !m; $('mailBtn').classList.toggle('new', !!m && !m.read); }
+function mailOpen() {
+  audio(); const m = mailToday(); if (!m) return; m.read = true; ls('dp_mail', JSON.stringify(m)); mailBadge();
+  $('mlText').innerHTML = m.lines.map((t, k) => `<button class="sent" data-k="${k}">${esc(t)}</button>`).join(''); $('mlQ').textContent = m.q;
+  $('mlAns').innerHTML = m.opts.map(id => `<button data-id="${id}" ${m.done ? 'disabled' : ''} class="${m.done && id === m.from ? 'yes' : ''}">${DINOS.find(d => d.id === id).n}</button>`).join('');
+  const d = DINOS.find(x => x.id === m.from); $('mlPic').innerHTML = m.done ? dimg(d) : '✉️'; $('mlFeed').textContent = m.done ? `Это написал ${d.n.toLowerCase()}!` : '';
+  $('mail').hidden = false; if (!m.done) say('Тебе письмо! Прочитай его сам. Если трудно — нажми на строчку.', 0.9);
+}
+$('mlText').onclick = e => { const b = e.target.closest('.sent'); if (!b) return; const m = mailToday(); m.heard = true; ls('dp_mail', JSON.stringify(m)); say(m.lines[+b.dataset.k], 0.85); };
+$('mlAns').onclick = e => {
+  const b = e.target.closest('button'); if (!b || b.disabled) return; const m = mailToday(), d = DINOS.find(x => x.id === m.from);
+  if (b.dataset.id !== m.from) { m.miss = true; ls('dp_mail', JSON.stringify(m)); b.classList.remove('no'); void b.offsetWidth; b.classList.add('no'); $('mlFeed').textContent = 'Не он. Перечитай письмо — там написано!'; say('Не он. Перечитай письмо!', 0.9); return; }
+  m.done = true; ls('dp_mail', JSON.stringify(m)); b.classList.add('yes'); $('mlPic').innerHTML = dimg(d); chime(); leaves();
+  const self = !m.heard && !m.miss, t = `Правильно! Это написал ${d.n.toLowerCase()}.` + (self ? ' ⭐ Ты прочитал письмо сам! +1 звезда в парк!' + built(addStar()) : '');
+  $('mlFeed').textContent = t; say(t.replace('⭐ ', ''), 0.9); [...$('mlAns').children].forEach(x => x.disabled = true);
+};
+$('mailBtn').onclick = mailOpen;
+$('mlClose').onclick = () => { $('mail').hidden = true; speechSynthesis && speechSynthesis.cancel(); };
+
+// ─── Ночь по часам телефона (с 20 до 7): темно, светлячки; «Сказка на ночь» — прочитал предложение, малыш уснул ───
+const nightKey = () => { const d = new Date(); if (d.getHours() < 7) d.setDate(d.getDate() - 1); return d.toDateString(); };
+const night = () => DL.isNight(new Date().getHours()) || /[?&]night/.test(location.search);
+function nightSet() { const n = night(); $('park').classList.toggle('night', n); $('taleBtn').hidden = !n || ls('dp_tale') === nightKey(); }
+function sleepAll() { walkers.forEach(a => { a.rest = 1e9; a.el.classList.add('sleep'); }); }
+let TL = null;
+function taleOpen() {
+  audio(); const n = +ls('dp_taleN') || 0; TL = { t: DL.TALES[n % DL.TALES.length], i: 0, heard: false };
+  $('taleBtn').hidden = true; $('tale').hidden = false; taleShow(); say('Сказка на ночь. Читай малышам по одному предложению — и они уснут.', 0.85);
+}
+function taleShow() { $('tlText').textContent = TL.t[TL.i]; $('tlCount').textContent = `💤 ${TL.i} из ${TL.t.length}`; $('tlNext').textContent = 'Прочитал ▶'; }
+$('tlSay').onclick = () => { if (!TL) return; TL.heard = true; say(TL.t[TL.i], 0.8); };
+$('tlNext').onclick = () => {
+  if (!TL) return; if (TL.done) { $('tale').hidden = true; TL = null; return; }
+  const awake = walkers.filter(a => !a.el.classList.contains('sleep')).sort(() => Math.random() - 0.5);   // засыпают поровну на каждое предложение
+  awake.slice(0, Math.ceil(awake.length / (TL.t.length - TL.i))).forEach(a => { a.rest = 1e9; a.el.classList.add('sleep'); });
+  if (++TL.i < TL.t.length) { tone(392, 0, 0.5, 0.05); return taleShow(); }
+  sleepAll(); TL.done = true; ls('dp_tale', nightKey()); ls('dp_taleN', (+ls('dp_taleN') || 0) + 1);
+  const self = !TL.heard, t = `Все уснули. Спокойной ночи${name() ? ', ' + name() : ''}!` + (self ? ' ⭐ Ты прочитал сказку сам! +1 звезда в парк!' + built(addStar()) : '');
+  $('tlText').textContent = t; $('tlCount').textContent = `💤 ${TL.t.length} из ${TL.t.length}`; $('tlNext').textContent = 'Закрыть'; say(t.replace('⭐ ', ''), 0.8);
+};
+$('taleBtn').onclick = taleOpen;
+
 $('pvBtn').onclick = () => { pv = 1 - pv; park(); say(pv ? 'Долина экспедиции. Здесь живут находки второй экспедиции.' : 'Парк.', 0.9); };
 $('stars').onclick = () => { const B = DL.build(stars); say(B.next ? `Звёзд: ${stars}. Ещё ${B.left}, и в парке появится ${B.next[1]}. Звёзды дают, когда читаешь сам.` : `Звёзд: ${stars}. Весь парк построен!`, 0.9); };
 function step(now) {
@@ -223,15 +275,15 @@ function alive() {
   roar(); setTimeout(() => say(d.n + '! ' + (goldRun && !hinted ? 'Золотая находка! Ты прочитал имя сам!' : pick(PRAISE))), 700);
   let praise = isNew ? `Новый динозавр в парке! ${pick(PRAISE)}` : pick(PRAISE);
   if (goldRun) { const g = golds(), first = !hinted && !g.includes(d.id);
-    if (first) { g.push(d.id); ls('dp_gold', JSON.stringify(g)); }
+    if (first) { g.push(d.id); ls('dp_gold', JSON.stringify(g)); logEv({ t: 'gold', id: d.id }); }
     praise = hinted ? 'Почти! Собери имя без подсказок — и будет золотая находка.' : '✨ Золотая находка! Ты прочитал имя сам!' + (first ? ' +1 звезда в парк!' + built(addStar()) : ''); }
   $('doneName').textContent = d.n; $('donePraise').textContent = praise; $('done').hidden = false; $('digHint').textContent = '';
   leaves();
-  if (isNew) { found++; ls('dp_found', found); }
+  if (isNew) { found++; ls('dp_found', found); logEv({ t: 'new', id: d.id }); }
   $('toPark').onclick = () => { speechSynthesis && speechSynthesis.cancel(); park(isNew ? found - 1 : -1); };
 }
 function foundFind(f) {                                                             // находка — в музей; собрал без подсказок — звезда
-  const fs = finds(); if (!fs.includes(f.id)) { fs.push(f.id); ls('dp_finds', JSON.stringify(fs)); }
+  const fs = finds(); if (!fs.includes(f.id)) { fs.push(f.id); ls('dp_finds', JSON.stringify(fs)); logEv({ t: 'find', id: f.id }); }
   $('task').hidden = true; $('fossil').className = 'alive'; $('fossil').innerHTML = fimg(f); chime(); leaves();
   const self = !hinted, t = `${f.w}! Находка для музея.` + (self ? ' ⭐ Ты прочитал слово сам! +1 звезда в парк!' + built(addStar()) : '');
   $('doneName').textContent = f.w; $('donePraise').textContent = t.slice(f.w.length + 2) + ` 🏛️ В музее: ${fs.length} из ${DD.FINDS.length}`; $('done').hidden = false; $('digHint').textContent = '';
@@ -286,7 +338,7 @@ $('trainBtn').onclick = () => {
 $('gNo').onclick = () => { $('gate').hidden = true; };
 $('gOk').onclick = () => {
   if (+$('gIn').value !== gateA) { $('gErr').textContent = 'Неверно — это вопрос для взрослых 🙂'; return; }
-  $('gate').hidden = true; const before = DL.belt(train).name; train++; ls('dp_train', train); ls('dp_lastTrain', today());
+  $('gate').hidden = true; const before = DL.belt(train).name; train++; ls('dp_train', train); ls('dp_lastTrain', today()); logEv({ t: 'train' });
   const g0 = DL.grow(train - 1), ups = DL.grow(train).filter((x, i) => g0[i] && x.stage > g0[i].stage).map(x => { const d = DINOS.find(y => y.id === x.id); return x.stage === 1 ? `Малыш ${d.n.toLowerCase()}а подрос!` : `${d.n} вырос!`; });
   const nb = DL.belt(train).name, beltUp = (nb !== before ? ` Новый дино-пояс: ${nb}!` : '') + (ups.length ? ' ' + ups.join(' ') : '');
   moveAsk(() => {                                                                    // сначала взрослый выбирает приём, потом — яйцо
@@ -301,7 +353,7 @@ let moveNext = null;
 function moveAsk(then) {
   moveNext = then; $('mvAskList').innerHTML = DD.MOVES.map(m => `<button data-id="${m.id}">${m.n}</button>`).join(''); $('mvAsk').hidden = false;
 }
-$('mvAskList').onclick = e => { const b = e.target.closest('button'); if (!b) return; const g = movesGot(); g[b.dataset.id] = (g[b.dataset.id] || 0) + 1; ls('dp_moves', JSON.stringify(g));
+$('mvAskList').onclick = e => { const b = e.target.closest('button'); if (!b) return; const g = movesGot(); g[b.dataset.id] = (g[b.dataset.id] || 0) + 1; ls('dp_moves', JSON.stringify(g)); logEv({ t: 'train', m: b.dataset.id });
   $('mvAsk').hidden = true; moveCard(DD.MOVES.find(m => m.id === b.dataset.id), g[b.dataset.id] === 1); };
 $('mvSkip').onclick = () => { $('mvAsk').hidden = true; const t = moveNext; moveNext = null; t && t(); };
 function moveCard(m, first) {                                                         // first — новый приём в альбоме
@@ -321,7 +373,7 @@ $('mvList').onclick = e => { const b = e.target.closest('button[data-id]'); if (
 $('movesBtn').onclick = movesOpen;
 $('mvBack').onclick = () => { speechSynthesis && speechSynthesis.cancel(); park(); };
 function hatch(beltUp) {                                                              // яйцо качается, раскалывается — малыш
-  const id = DL.babies(train).slice(-1)[0], d = DINOS.find(x => x.id === id);
+  const id = DL.babies(train).slice(-1)[0], d = DINOS.find(x => x.id === id); logEv({ t: 'hatch', id });
   $('hPic').innerHTML = eggSVG(2, false, id); $('hPic').className = 'crack';
   const g = guessOf(), right = g && g.k === train / 3 && g.id === id, nb = right ? addStar() : null;   // угадал, кто в яйце
   if (right) beltUp += ` 🎯 Ты угадал! +1 звезда в парк!${built(nb)}`; $('hTitle').textContent = 'Яйцо вылупляется…'; $('hText').textContent = ''; $('hOk').hidden = true; $('hatch').hidden = false;

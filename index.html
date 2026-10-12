@@ -103,6 +103,25 @@ button{font:inherit;color:inherit;cursor:pointer;border:0}
 .ans:active{transform:translateY(4px)}
 #pFeed{margin-top:auto;padding:14px;border-radius:22px;background:rgba(255,250,240,.96);text-align:center}
 #pFeed[hidden]{display:none}
+#mailBtn{position:absolute;right:10px;top:calc(env(safe-area-inset-top) + 10px);z-index:31}
+#mailBtn.new{animation:wob 1.6s ease-in-out infinite}#mailBtn.new::after{content:"";position:absolute;right:4px;top:4px;width:12px;height:12px;border-radius:50%;background:#ff3b30;border:2px solid #fff}
+#mlPic{height:110px;display:flex;align-items:flex-end;justify-content:center;font-size:72px;background:linear-gradient(#fff3d6,#e9f7d8);border-radius:20px}#mlPic img{max-height:100px;width:auto;max-width:80%}
+#mlText{display:flex;flex-direction:column;gap:4px;text-align:left;margin:8px 0}#mlText .sent{text-align:left;padding:6px 8px;border-radius:10px;background:#fffaf0;font-size:19px;font-weight:700;line-height:1.3}
+#mlAns{display:flex;flex-direction:column;gap:6px}#mlAns button{padding:10px;border-radius:14px;background:#f3ead8;font-weight:900;font-size:19px;box-shadow:0 3px 0 #d8c7a6}
+#mlAns button.no{animation:no .4s;background:#ffd6d6}#mlAns button.yes{background:#bff0c5}#mlFeed{font-weight:800;min-height:1em}
+#night{display:none;position:absolute;inset:0;z-index:20;pointer-events:none;background:linear-gradient(rgba(8,14,48,.72),rgba(10,20,50,.5) 55%,rgba(5,10,30,.45))}
+#park.night #night{display:block}#night .moon{position:absolute;right:18%;top:22%;font-size:44px;font-style:normal;filter:drop-shadow(0 0 12px #fff6b0)}
+#night b{position:absolute;width:6px;height:6px;border-radius:50%;background:#fff59d;box-shadow:0 0 10px 3px #ffeb3b;animation:fly 6s ease-in-out infinite alternate}
+#night b:nth-child(2){left:12%;top:62%}#night b:nth-child(3){left:38%;top:70%;animation-delay:-1.5s}#night b:nth-child(4){left:66%;top:58%;animation-delay:-3s}
+#night b:nth-child(5){left:82%;top:74%;animation-delay:-2s}#night b:nth-child(6){left:24%;top:80%;animation-delay:-4s}#night b:nth-child(7){left:55%;top:66%;animation-delay:-.7s}
+@keyframes fly{0%{transform:translate(0,0);opacity:.3}50%{opacity:1}100%{transform:translate(30px,-24px);opacity:.5}}
+.pd.sleep::after{content:"💤";position:absolute;left:55%;top:-8px;font-size:20px;animation:zz 2s ease-in-out infinite;pointer-events:none}
+@keyframes zz{50%{transform:translate(6px,-8px);opacity:.6}}
+#park.night #top{z-index:25}
+#taleBtn{white-space:nowrap;position:absolute;left:50%;transform:translateX(-50%);top:46%;z-index:31;padding:12px 18px;border-radius:999px;background:#ffe9a8;font-weight:900;font-size:19px;box-shadow:0 0 22px rgba(255,230,140,.8),0 5px 0 #c9a26a}
+#tale{position:fixed;left:10px;right:10px;bottom:calc(env(safe-area-inset-bottom) + 10px);z-index:40;padding:14px;border-radius:24px;background:rgba(20,26,60,.94);color:#fff;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+#tlCount{font-weight:800;color:#c8d2ff}#tlText{font-size:clamp(22px,6.4vw,28px);font-weight:900;line-height:1.3;margin:8px 0 12px;min-height:2.6em}
+#tlRow{display:flex;gap:10px;justify-content:center}#tlSay{width:56px;border-radius:18px;background:#3a4380;font-size:24px}
 #mvAskList{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}#mvAskList button{padding:10px 6px;border-radius:14px;background:#f3ead8;font-weight:800;font-size:15px;line-height:1.15;box-shadow:0 3px 0 #d8c7a6}
 #mvStage{position:relative;height:150px;border-radius:20px;background:linear-gradient(#fff3d6,#ffe0b8);overflow:hidden}
 #mvStage::after{content:"";position:absolute;left:8%;right:8%;bottom:10px;height:14px;border-radius:7px;background:#e8c27a}   /* ковёр */
@@ -262,6 +281,9 @@ h2{margin:6px 0;font-size:26px}
 <div class="scr" id="park">
   <img id="bg" src="park.jpg" alt="">
   <button id="pvBtn" hidden></button>
+  <div id="night"><i class="moon">🌙</i><b></b><b></b><b></b><b></b><b></b><b></b></div>
+  <button id="mailBtn" class="round" aria-label="Письмо" hidden>📬</button>
+  <button id="taleBtn" hidden>🌙 Сказка на ночь</button>
   <div id="dinos"></div>
   <div id="top"><h1>Дино-парк</h1><div id="hello"></div><div id="count"></div><div id="belt"></div><button id="stars"></button></div>
   <div id="sambo"><button id="egg" aria-label="Яйцо динозавра"></button><button id="trainBtn">🥋 Самбо</button></div>
@@ -397,6 +419,12 @@ h2{margin:6px 0;font-size:26px}
   <div id="mvStage"></div><p id="mvTag"></p><h2 id="mvName"></h2><p id="mvText"></p>
   <p><button class="link" id="mvSay">🔊 Послушать</button></p><button class="go" id="mvOk">Дальше ▶</button>
 </div></div>
+<div class="ovl" id="mail" hidden><div class="card">
+  <div id="mlPic"></div><h2>📬 Тебе письмо!</h2>
+  <div id="mlText"></div><p id="mlQ" style="font-weight:900"></p><div id="mlAns"></div><p id="mlFeed"></p>
+  <button class="go" id="mlClose">Закрыть</button>
+</div></div>
+<div id="tale" hidden><div id="tlCount"></div><div id="tlText"></div><div id="tlRow"><button id="tlSay">🔊</button><button class="go" id="tlNext">Прочитал ▶</button></div></div>
 <div class="ovl" id="guess" hidden><div class="card">
   <div id="guessEgg"></div><h2>Кто в яйце?</h2><p>Прочитай имена и выбери!</p>
   <div id="guessOpts"></div><p><button class="link" id="guessNo">Потом</button></p>

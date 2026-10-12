@@ -80,4 +80,14 @@ for (const f of F) assert(!f.img || (require('fs').existsSync(__dirname + '/find
 for (let n = 0; n < 40; n++) { const h = n + 3 - (n % 3); assert.strictEqual(DL.nextBaby(n), DL.babies(h).slice(-1)[0], 'яйцо на ' + n); }
 // приёмы самбо: id без повторов, анимация из известных, описание короткое
 assert.strictEqual(new Set(DD.MOVES.map(m => m.id)).size, DD.MOVES.length); assert(DD.MOVES.every(m => ['fall', 'roll', 'trip', 'throw', 'hold'].includes(m.a) && m.d.length < 80 && m.n));
+// письма: от кого — среди вариантов, варианты разные, текст без «undefined»; на каждое событие своё письмо
+const c0 = { name: 'Рома', found: 25, babies: ['trex', 'trike'] };
+const EVS = [null, { t: 'train', m: 'hip' }, { t: 'train' }, { t: 'hatch', id: 'trike' }, { t: 'find', id: 'paw' }, { t: 'new', id: 'mosa' }, { t: 'gold', id: 'stego' }, { t: 'find', id: 'nope' }];
+for (const e of EVS) for (let sd = 1; sd < 30; sd++) { const L = DL.letter(e, c0, DL.rng(sd));
+  assert(L.opts.includes(L.from) && new Set(L.opts).size === 3 && L.lines.every(t => t && !/undefined|NaN/.test(t)), JSON.stringify(e)); }
+assert(DL.letter({ t: 'train', m: 'hip' }, c0, DL.rng(1)).lines.join(' ').includes('бросок через бедро') && DL.letter({ t: 'train', m: 'hip' }, c0).from === 'trike', 'письмо о тренировке — от последнего малыша');
+for (let sd = 1; sd < 30; sd++) assert(DL.letter(null, { name: 'Рома', found: 15, babies: [] }, DL.rng(sd)).opts.every(id => DD.DINOS.findIndex(d => d.id === id) < 15), 'варианты — из найденных');
+assert(DL.letter({ t: 'find', id: 'paw' }, c0).lines.join(' ').includes('нашёл лапу') && DL.letter(null, { name: '', found: 1, babies: [] }).lines[0] === 'Привет, палеонтолог!', 'падеж и обращение');
+// сказки: по 6 коротких предложений; ночь — с 20 до 7
+assert(DL.TALES.every(t => t.length === 6 && t.every(x => x.length < 45))); assert(DL.isNight(21) && DL.isNight(3) && !DL.isNight(7) && !DL.isNight(19));
 console.log('ВСЁ ОК');
