@@ -50,31 +50,39 @@ const today = () => new Date().toDateString();
 
 // ─── парк: динозавры гуляют, птеранодон летает ───
 let walkers = [], last = performance.now();
+let pv = 0;                                                                           // какой участок парка: 0 — парк (первые 15 и малыши), 1 — Долина экспедиции (16–25)
+const PV1 = 15;
 function park(fresh = -1) {
+  if (typeof fresh === 'number' && fresh >= 0) pv = fresh >= PV1 ? 1 : 0; else if (fresh === 'baby') pv = 0;
+  if (found <= PV1) pv = 0;
+  $('park').classList.toggle('v2', pv === 1); $('pvBtn').hidden = found <= PV1;
+  $('pvBtn').className = pv ? 'l' : 'r'; $('pvBtn').textContent = pv ? '◀ Парк' : 'Долина ▶';
   $('park').hidden = false; $('dig').hidden = true; ['hungry', 'prof', 'size', 'stories', 'story', 'sent', 'ward', 'mus', 'gamesSheet'].forEach(id => $(id).hidden = true); if (HG) HG.done = true;
-  $('hello').textContent = name() ? `Палеонтолог ${name()}` : '';
+  $('hello').textContent = (name() ? `Палеонтолог ${name()}` : '') + (pv ? ' · Долина экспедиции' : '');
   $('count').textContent = found >= DINOS.length ? `Все ${DINOS.length} динозавров найдены! 🏆` : `🦕 В парке: ${found} из ${DINOS.length}`;
   const next = DINOS[Math.min(found, DINOS.length - 1)];
   $('digQ').innerHTML = found < DINOS.length ? dimg(next, 'shadow') : '🏆';
   $('digSub').textContent = found < DINOS.length ? 'Кто прячется в земле?' : 'Раскопать ещё раз';
   const b = DL.belt(train); $('belt').innerHTML = `<i style="background:${b.color}"></i>Дино-пояс: ${b.name}` + (b.left ? ` · ещё ${b.left}` : ' 🏆');
-  $('egg').innerHTML = eggSVG(DL.cracks(train)); $('egg').classList.toggle('wob', DL.cracks(train) > 0);
+  $('egg').innerHTML = eggSVG(DL.cracks(train), false, DL.nextBaby(train)); $('egg').classList.toggle('wob', DL.cracks(train) > 0);
   const box = $('dinos'); box.innerHTML = ''; walkers = [];
   const W = innerWidth, H = innerHeight, k = Math.min(W, 520);                      // ширина «обычного» динозавра — доля этой величины
-  const land = DINOS.slice(0, found).filter(d => !d.fly && !d.swim).length, fit = Math.min(1, Math.sqrt(13 / Math.max(1, land)));   // больше 13 на поляне — все чуть мельче
+  const here = (d, i) => i < found && (pv ? i >= PV1 : i < PV1), flip = pv === 1;      // в Долине фон зеркальный — вода слева
+  const land = DINOS.filter((d, i) => here(d, i) && !d.fly && !d.swim).length, fit = Math.min(1, Math.sqrt(13 / Math.max(1, land)));   // больше 13 на поляне — все чуть мельче
   const bk = Math.max(W / 900, H / 1575), bl = (W - 900 * bk) / 2;                  // как park.jpg (900×1575, cover, низ к низу) лёг на экран — чтобы плавать в воде
-  DINOS.slice(0, found).forEach((d, i) => {
+  DINOS.forEach((d, i) => { if (!here(d, i)) return;
     const el = document.createElement('div'), flyer = d.fly, swim = d.swim, lane = flyer || swim ? 0 : i % 3, depth = swim ? 0.5 : [0.6, 0.8, 1][lane];
     el.className = 'pd' + (flyer ? ' fly' : '') + (swim ? ' swim' : '') + (i === fresh ? ' new' : '') + (golds().includes(d.id) ? ' gold' : ''); el.innerHTML = `<div class="flip">${dimg(d)}</div>`;
     const w = k * 0.34 * d.scale * depth * (flyer || swim ? 1 : fit); el.style.width = w + 'px';
     const yb = flyer ? H * 0.68 : swim ? 675 * bk : H * [0.335, 0.255, 0.165][lane]; // ноги — на поляне фона: дальние выше и мельче; морские — в воде (вода на фоне: x 500–880, низ ~880)
     el.style.bottom = yb + 'px'; el.style.zIndex = flyer ? 1 : swim ? 2 : 10 + lane;
-    const lo = swim ? bl + 500 * bk : -w * 0.2, hi = swim ? Math.max(lo, Math.min(bl + 880 * bk, W) - w * 0.9) : W - w * 0.8;
+    const wl = flip ? W - (bl + 880 * bk) : bl + 500 * bk, wr = flip ? W - (bl + 500 * bk) : bl + 880 * bk;   // вода по горизонтали
+    const lo = swim ? Math.max(0, wl) : -w * 0.2, hi = swim ? Math.max(lo, Math.min(wr, W) - w * 0.9) : W - w * 0.8;
     el.onclick = () => card(d);
     box.appendChild(el);
     walkers.push({ el, w, lo, hi, x: swim ? lo + Math.random() * (hi - lo) : i === fresh ? W * 0.6 : Math.random() * (W - w), dir: Math.random() < 0.5 ? -1 : 1, v: (flyer ? 60 : swim ? 30 : 18 + Math.random() * 16) * depth, rest: 0, flyer: flyer || swim });
   });
-  DL.grow(train).forEach(({ id, stage }, i, all) => {                                  // малыши из яйца — впереди, прыгают; от тренировок растут: малыш → подросток → взрослый
+  if (!pv) DL.grow(train).forEach(({ id, stage }, i, all) => {                                  // малыши из яйца — впереди, прыгают; от тренировок растут: малыш → подросток → взрослый
     const d = DINOS.find(x => x.id === id), el = document.createElement('div');
     el.className = 'pd baby' + (fresh === 'baby' && i === all.length - 1 ? ' new' : ''); el.innerHTML = `<div class="flip">${dimg(d)}</div>`;
     const w = k * [0.15, 0.22, 0.3 * d.scale][stage]; el.style.width = w + 'px'; el.style.bottom = H * 0.15 + (i % 2) * 14 + 'px'; el.style.zIndex = 14;
@@ -86,10 +94,11 @@ function park(fresh = -1) {
   walkers.push({ el: be, w: bw, lo: 0, hi: W - bw, x: W * 0.35, dir: 1, v: 22, rest: 0, flyer: false });
   const B = DL.build(stars), BX = [0.1, 0.84, 0.34, 0.59, 0.22, 0.47, 0.71, 0.93];    // постройки у края поляны, за динозаврами; 5-я и дальше — второй ряд, мельче, в промежутках первого
   $('stars').textContent = B.next ? `⭐ ${stars} · ещё ${B.left} до ${B.next[0]}` : `⭐ ${stars} · парк построен 🏆`;
-  DD.BUILDS.slice(0, B.n).forEach(([, n, id], i) => { const el = document.createElement('div'); el.className = 'bd' + (i > 3 ? ' far' : '') + (i === newB ? ' new' : ''); el.innerHTML = `<img src="builds/${id}.webp" alt="${n}" draggable="false">`; el.style.width = k * (i > 3 ? 0.17 : 0.22) + 'px';
+  DD.BUILDS.slice(0, pv ? 0 : B.n).forEach(([, n, id], i) => { const el = document.createElement('div'); el.className = 'bd' + (i > 3 ? ' far' : '') + (i === newB ? ' new' : ''); el.innerHTML = `<img src="builds/${id}.webp" alt="${n}" draggable="false">`; el.style.width = k * (i > 3 ? 0.17 : 0.22) + 'px';
     el.style.left = BX[i] * 100 + '%'; el.style.bottom = H * (i > 3 ? 0.405 : 0.345) + 'px'; el.onclick = id === 'museum' ? museum : () => say(n, 0.9); box.appendChild(el); });
   if (newB >= 0) { const n = DD.BUILDS[newB][1]; newB = -1; setTimeout(() => { leaves(); say('В парке новая постройка: ' + n + '!', 0.9); }, 500); }
 }
+$('pvBtn').onclick = () => { pv = 1 - pv; park(); say(pv ? 'Долина экспедиции. Здесь живут находки второй экспедиции.' : 'Парк.', 0.9); };
 $('stars').onclick = () => { const B = DL.build(stars); say(B.next ? `Звёзд: ${stars}. Ещё ${B.left}, и в парке появится ${B.next[1]}. Звёзды дают, когда читаешь сам.` : `Звёзд: ${stars}. Весь парк построен!`, 0.9); };
 function step(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
@@ -246,15 +255,29 @@ $('digBtn').onclick = () => dig();
 $('goldBtn').onclick = () => { if (!found) { toast('Сначала найди динозавра на раскопках! 🦴'); return; } dig(true); };
 
 // ─── самбо: яйцо трескается от тренировок, три — вылупляется малыш; отмечает взрослый (вопрос на умножение) ───
-function eggSVG(c, open = false) {
+function eggSVG(c, open = false, sil = '') {                                        // sil — кто внутри: с каждой трещиной силуэт проступает сильнее
   const cr = ['', 'M40,22 l6,8 l-5,6 l7,7', 'M28,40 l8,4 l-3,7 l9,3', 'M52,50 l-7,5 l4,6 l-8,4'].slice(0, c + 1).join(' ');
+  const sh = sil && c ? `<defs><clipPath id="eggc"><ellipse cx="40" cy="54" rx="26" ry="34"/></clipPath><filter id="blk"><feColorMatrix type="matrix" values="0 0 0 0 .3  0 0 0 0 .22  0 0 0 0 .15  0 0 0 1 0"/></filter></defs>`
+    + `<image href="dinos/${sil}.webp" x="14" y="34" width="52" height="42" preserveAspectRatio="xMidYMid meet" filter="url(#blk)" clip-path="url(#eggc)" opacity="${[0, 0.3, 0.55][c] || 0.55}"/>` : '';
   return `<svg viewBox="0 0 80 96"><ellipse cx="40" cy="90" rx="26" ry="5" fill="rgba(0,0,0,.18)"/>`
     + (open ? '<path d="M14,58 Q14,90 40,90 Q66,90 66,58 L58,52 L50,60 L40,50 L30,60 L22,52 Z" fill="#f4ecd8" stroke="#c9b48a" stroke-width="2"/>'
-      : `<ellipse cx="40" cy="54" rx="27" ry="35" fill="#f4ecd8" stroke="#c9b48a" stroke-width="2"/><circle cx="30" cy="40" r="5" fill="#8fc46b"/><circle cx="50" cy="60" r="6" fill="#8fc46b"/><circle cx="46" cy="32" r="3.5" fill="#8fc46b"/><circle cx="28" cy="68" r="4" fill="#8fc46b"/>`
+      : `<ellipse cx="40" cy="54" rx="27" ry="35" fill="#f4ecd8" stroke="#c9b48a" stroke-width="2"/><circle cx="30" cy="40" r="5" fill="#8fc46b"/><circle cx="50" cy="60" r="6" fill="#8fc46b"/><circle cx="46" cy="32" r="3.5" fill="#8fc46b"/><circle cx="28" cy="68" r="4" fill="#8fc46b"/>` + sh
         + (cr ? `<path d="${cr}" stroke="#5a4630" stroke-width="2.5" fill="none" stroke-linecap="round"/>` : '')) + '</svg>';
 }
 function toast(t, ms = 2600) { const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), ms); }
-$('egg').onclick = () => { audio(); const left = 3 - DL.cracks(train); say(`Ходи на самбо — и яйцо вылупится! Осталось ${left} ${left === 1 ? 'тренировка' : 'тренировки'}.`); toast(`🥚 Ещё ${left} ${left === 1 ? 'тренировка' : 'тренировки'} по самбо — и кто-то вылупится!`); };
+// Кто в яйце? С первой трещиной проступает силуэт — можно угадать (прочитать имена); угадал — при вылуплении звезда
+const guessOf = () => { try { return JSON.parse(ls('dp_guess') || 'null'); } catch (e) { return null; } };
+function guessOpen() {
+  const id = DL.nextBaby(train), opts = [id, ...DL.BABIES.filter(x => x !== id).sort(() => Math.random() - 0.5).slice(0, 2)].sort(() => Math.random() - 0.5), g = guessOf(), k = Math.floor(train / 3) + 1;
+  $('guessEgg').innerHTML = eggSVG(DL.cracks(train), false, id);
+  $('guessOpts').innerHTML = opts.map(x => `<button data-id="${x}" class="${g && g.k === k && g.id === x ? 'on' : ''}">${DINOS.find(d => d.id === x).n}</button>`).join('');
+  $('guess').hidden = false; say('Кто сидит в яйце? Прочитай имена и выбери!', 0.9);
+}
+$('guessOpts').onclick = e => { const b = e.target.closest('button'); if (!b) return;
+  ls('dp_guess', JSON.stringify({ k: Math.floor(train / 3) + 1, id: b.dataset.id })); tone(660, 0, 0.25, 0.08);
+  const left = 3 - DL.cracks(train); $('guess').hidden = true; say(`Запомнил! Узнаем через ${left} ${left === 1 ? 'тренировку' : 'тренировки'} по самбо.`, 0.9); toast(`🥚 Ты думаешь: ${b.textContent}. Проверим, когда вылупится!`, 3200); };
+$('guessNo').onclick = () => { $('guess').hidden = true; };
+$('egg').onclick = () => { audio(); if (DL.cracks(train) > 0) return guessOpen(); const left = 3 - DL.cracks(train); say(`Ходи на самбо — и яйцо вылупится! Осталось ${left} ${left === 1 ? 'тренировка' : 'тренировки'}.`); toast(`🥚 Ещё ${left} ${left === 1 ? 'тренировка' : 'тренировки'} по самбо — и кто-то вылупится!`); };
 let gateA = 0;
 $('trainBtn').onclick = () => {
   audio(); if (ls('dp_lastTrain') === today()) { toast('Сегодняшняя тренировка уже отмечена 💪'); return; }
@@ -272,7 +295,9 @@ $('gOk').onclick = () => {
 };
 function hatch(beltUp) {                                                              // яйцо качается, раскалывается — малыш
   const id = DL.babies(train).slice(-1)[0], d = DINOS.find(x => x.id === id);
-  $('hPic').innerHTML = eggSVG(2); $('hPic').className = 'crack'; $('hTitle').textContent = 'Яйцо вылупляется…'; $('hText').textContent = ''; $('hOk').hidden = true; $('hatch').hidden = false;
+  $('hPic').innerHTML = eggSVG(2, false, id); $('hPic').className = 'crack';
+  const g = guessOf(), right = g && g.k === train / 3 && g.id === id, nb = right ? addStar() : null;   // угадал, кто в яйце
+  if (right) beltUp += ` 🎯 Ты угадал! +1 звезда в парк!${built(nb)}`; $('hTitle').textContent = 'Яйцо вылупляется…'; $('hText').textContent = ''; $('hOk').hidden = true; $('hatch').hidden = false;
   say('Ой! Кто-то вылупляется!'); noise(0.3, 3000, 0.2, 0.6); noise(0.3, 2500, 0.2, 1.2);
   setTimeout(() => {
     $('hPic').className = ''; $('hPic').innerHTML = `<div style="width:62%">${dimg(d)}</div>`;

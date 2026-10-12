@@ -75,4 +75,7 @@ for (const f of F) { assert.strictEqual(f.parts.join(''), f.w, f.w); assert.stri
   for (let s = 1; s <= 10; s++) { const t = DL.ftiles(f, DL.rng(s)); assert(f.parts.every(p => t.includes(p)) && new Set(t).size === t.length && t.length === f.parts.length + 3, f.w + ': карточки');
     assert(t.every(p => (p.length === 1) === (f.parts[0].length === 1)), f.w + ': буквы с буквами, слоги со слогами'); } }
 assert(F.slice(0, 3).every(f => f.parts.every(p => p.length === 1)), 'первые находки — короткие слова по буквам');
+for (const f of F) assert(!f.img || (require('fs').existsSync(__dirname + '/finds/' + f.id + '.webp') && require('fs').readFileSync(__dirname + '/sw.js', 'utf8').includes(`finds/${f.id}.webp`)), f.w + ': картинка есть и в кэше');
+// силуэт в яйце — тот, кто вылупится на ближайшей тройке тренировок
+for (let n = 0; n < 40; n++) { const h = n + 3 - (n % 3); assert.strictEqual(DL.nextBaby(n), DL.babies(h).slice(-1)[0], 'яйцо на ' + n); }
 console.log('ВСЁ ОК');

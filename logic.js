@@ -18,6 +18,7 @@ function belt(n) { let i = 0; while (i + 1 < BELTS.length && n >= BELTS[i + 1][2
 const BABIES = ['trex', 'trike', 'stego', 'diplo', 'ankylo'];
 const babies = n => Array.from({ length: Math.floor(n / 3) }, (_, i) => BABIES[i % BABIES.length]);
 const cracks = n => n % 3;
+const nextBaby = n => BABIES[Math.floor(n / 3) % BABIES.length];                   // кто сидит в яйце сейчас (вылупится на следующей тройке тренировок)
 // Малыши растут от тренировок: вылупился на 3·(i+1)-й, через 3 тренировки — подросток, через 6 — взрослый
 const grow = n => babies(n).map((id, i) => { const age = n - 3 * (i + 1); return { id, stage: age >= 6 ? 2 : age >= 3 ? 1 : 0 }; });
 // Карточки для находки: нужные части + 3 лишние того же вида (буквы к буквам, слоги к слогам; сначала похожие)
@@ -63,5 +64,5 @@ function sents(found, k, r = Math.random) {
   for (const x of all) if (out.length < k && !out.includes(x)) out.push(x);
   return out.slice(0, k);
 }
-globalThis.DL = { rng, tiles, extra, belt, babies, cracks, gate, BELTS, pool, prof, compare, build, STEP, sents, grow, ftiles };
+globalThis.DL = { rng, tiles, extra, belt, babies, cracks, gate, BELTS, pool, prof, compare, build, STEP, sents, grow, ftiles, nextBaby, BABIES };
 })();
