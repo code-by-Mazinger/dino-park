@@ -65,7 +65,7 @@ function park(fresh = -1) {
   $('digQ').innerHTML = found < DINOS.length ? dimg(next, 'shadow') : '🏆';
   $('digSub').textContent = found < DINOS.length ? 'Кто прячется в земле?' : 'Раскопать ещё раз';
   const b = DL.belt(train); $('belt').innerHTML = `<i style="background:${b.color}"></i>Дино-пояс: ${b.name}` + (b.left ? ` · ещё ${b.left}` : ' 🏆');
-  $('egg').innerHTML = eggSVG(DL.cracks(train), false, DL.nextBaby(train)); $('egg').classList.toggle('wob', DL.cracks(train) > 0);
+  $('egg').innerHTML = eggSVG(DL.cracks(train), false, DL.nextBaby(train)); $('guessBtn').hidden = !DL.cracks(train); $('egg').classList.toggle('wob', DL.cracks(train) > 0);
   const box = $('dinos'); box.innerHTML = ''; walkers = [];
   const W = innerWidth, H = innerHeight, k = Math.min(W, 520);                      // ширина «обычного» динозавра — доля этой величины
   const here = (d, i) => i < found && (pv ? i >= PV1 : i < PV1), flip = pv === 1;      // в Долине фон зеркальный — вода слева
@@ -329,7 +329,8 @@ $('guessOpts').onclick = e => { const b = e.target.closest('button'); if (!b) re
   ls('dp_guess', JSON.stringify({ k: Math.floor(train / 3) + 1, id: b.dataset.id })); tone(660, 0, 0.25, 0.08);
   const left = 3 - DL.cracks(train); $('guess').hidden = true; say(`Запомнил! Узнаем через ${left} ${left === 1 ? 'тренировку' : 'тренировки'} по самбо.`, 0.9); toast(`🥚 Ты думаешь: ${b.textContent}. Проверим, когда вылупится!`, 3200); };
 $('guessNo').onclick = () => { $('guess').hidden = true; };
-$('egg').onclick = () => { audio(); if (DL.cracks(train) > 0) return guessOpen(); const left = 3 - DL.cracks(train); say(`Ходи на самбо — и яйцо вылупится! Осталось ${left} ${left === 1 ? 'тренировка' : 'тренировки'}.`); toast(`🥚 Ещё ${left} ${left === 1 ? 'тренировка' : 'тренировки'} по самбо — и кто-то вылупится!`); };
+$('egg').onclick = () => $('trainBtn').onclick();                                   // яйцо — тоже отметка тренировки, через пример для взрослых
+$('guessBtn').onclick = () => { audio(); guessOpen(); };                             // «Кто в яйце?» — пузырь над треснувшим яйцом
 let gateA = 0;
 $('trainBtn').onclick = () => {
   audio(); if (ls('dp_lastTrain') === today()) { toast('Сегодняшняя тренировка уже отмечена 💪'); return; }
