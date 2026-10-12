@@ -103,6 +103,11 @@ button{font:inherit;color:inherit;cursor:pointer;border:0}
 .ans:active{transform:translateY(4px)}
 #pFeed{margin-top:auto;padding:14px;border-radius:22px;background:rgba(255,250,240,.96);text-align:center}
 #pFeed[hidden]{display:none}
+.di.fe{display:block;font-size:min(34vw,150px);line-height:1.1;text-align:center;font-style:normal}
+#musList{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top) + 70px);bottom:0;overflow-y:auto;padding:0 12px calc(env(safe-area-inset-bottom) + 14px);display:grid;grid-template-columns:repeat(3,1fr);gap:10px;align-content:start;z-index:3}
+#musList button{padding:10px 4px;border-radius:18px;background:#fffaf0;box-shadow:0 4px 0 #d8c7a6;display:flex;flex-direction:column;align-items:center;gap:4px}
+#musList button .di{max-width:100%;height:auto;max-height:64px}#musList button .di.fe{font-size:48px}#musList button b{font-size:20px;font-weight:900;letter-spacing:.04em}
+#musList button.no{opacity:.5}
 .pd.boy svg{display:block;width:100%;height:auto;filter:drop-shadow(0 3px 3px rgba(0,0,0,.3))}
 #wdBox{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top) + 66px);bottom:0;display:flex;flex-direction:column;align-items:center;gap:12px;padding:0 12px calc(env(safe-area-inset-bottom) + 12px);z-index:3}
 #wdBoy{flex:1;min-height:0;display:flex;align-items:flex-end;justify-content:center}
@@ -270,6 +275,10 @@ h2{margin:6px 0;font-size:26px}
     <div id="wFeed" hidden><div id="wFeedText"></div><button class="go" id="wNext">Дальше ▶</button></div>
   </div>
 </div>
+<div class="scr game" id="mus" hidden>
+  <div class="gtop"><button class="round" id="musBack" aria-label="В парк">🌴</button><div class="gpill" id="musTitle"></div><div style="width:48px"></div></div>
+  <div id="musList"></div>
+</div>
 <div class="scr game" id="ward" hidden>
   <div class="gtop"><button class="round" id="wdBack" aria-label="В парк">🌴</button><div class="gpill" id="wdStars"></div><div style="width:48px"></div></div>
   <div id="wdBox"><div id="wdBoy"></div><div id="wdTabs"></div><div id="wdItems"></div></div>
@@ -295,6 +304,7 @@ h2{margin:6px 0;font-size:26px}
     <button class="gtile" id="sentBtn"><b>🧩</b>Собери фразу<small>слова по порядку</small></button>
     <button class="gtile" id="goldBtn"><b>✨</b>Золотые раскопки<small>имя без подсказок</small></button>
     <button class="gtile" id="wardBtn"><b>👕</b>Гардероб<small>наряди палеонтолога</small></button>
+    <button class="gtile" id="musBtn"><b>🏛️</b>Музей находок<small>что нашёл на раскопках</small></button>
   </div>
   <button class="go" id="gamesClose">Назад</button>
 </div></div>

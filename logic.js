@@ -18,6 +18,16 @@ function belt(n) { let i = 0; while (i + 1 < BELTS.length && n >= BELTS[i + 1][2
 const BABIES = ['trex', 'trike', 'stego', 'diplo', 'ankylo'];
 const babies = n => Array.from({ length: Math.floor(n / 3) }, (_, i) => BABIES[i % BABIES.length]);
 const cracks = n => n % 3;
+// Малыши растут от тренировок: вылупился на 3·(i+1)-й, через 3 тренировки — подросток, через 6 — взрослый
+const grow = n => babies(n).map((id, i) => { const age = n - 3 * (i + 1); return { id, stage: age >= 6 ? 2 : age >= 3 ? 1 : 0 }; });
+// Карточки для находки: нужные части + 3 лишние того же вида (буквы к буквам, слоги к слогам; сначала похожие)
+const ABC = 'АБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЭЮЯ'.split('');                         // лишние буквы — без редких Й, Ы, Ь (в нужных они остаются)
+function ftiles(f, r = Math.random) {
+  const need = f.parts, letters = need.every(p => p.length === 1);
+  const all = letters ? ABC : [...new Set([...DD.FINDS.flatMap(x => x.parts), ...DD.DINOS.flatMap(x => x.syl)])].filter(p => p.length > 1);
+  const pool = all.filter(s => !need.includes(s)), like = shuffle(pool.filter(s => need.some(n => n[0] === s[0])), r), other = shuffle(pool.filter(s => !like.includes(s)), r);
+  return shuffle([...need, ...[...like, ...other].slice(0, 3)], r);
+}
 // Вопрос для взрослых: таблица умножения 6…9 (ребёнку в первом классе не по силам, взрослому — секунда)
 const gate = (r = Math.random) => { const a = 6 + Math.floor(r() * 4), b = 6 + Math.floor(r() * 4); return { q: `${a} × ${b}`, a: a * b }; };
 // Голодный динозавр: слоги из имён найденных динозавров (пока найдено мало — добираем из первых, чтобы было хотя бы 6)
@@ -53,5 +63,5 @@ function sents(found, k, r = Math.random) {
   for (const x of all) if (out.length < k && !out.includes(x)) out.push(x);
   return out.slice(0, k);
 }
-globalThis.DL = { rng, tiles, extra, belt, babies, cracks, gate, BELTS, pool, prof, compare, build, STEP, sents };
+globalThis.DL = { rng, tiles, extra, belt, babies, cracks, gate, BELTS, pool, prof, compare, build, STEP, sents, grow, ftiles };
 })();

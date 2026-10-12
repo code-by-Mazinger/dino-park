@@ -66,4 +66,13 @@ assert(Object.entries(BOY.START).every(([s, id]) => BOY.it(id).slot === s && BOY
 const paid = IT.filter(x => x.need > 0).map(x => x.need); assert.strictEqual(new Set(paid).size, paid.length, 'пороги звёзд разные');
 for (const x of IT) { const o = { ...BOY.START, [x.slot]: x.id }, g = BOY.svg(o); assert(g.startsWith('<svg') && g.includes(x.svg.slice(0, 30)), x.n + ': рисуется'); }
 assert(require('fs').readFileSync(__dirname + '/sw.js', 'utf8').includes("'boy.js'"), 'boy.js в кэше');
+// малыши растут: подросток через 3 тренировки после вылупления, взрослый — через 6
+assert.deepStrictEqual(DL.grow(3), [{ id: 'trex', stage: 0 }]); assert.deepStrictEqual(DL.grow(6).map(x => x.stage), [1, 0]);
+assert.deepStrictEqual(DL.grow(9).map(x => x.stage), [2, 1, 0]); assert.strictEqual(DL.grow(30).filter(x => x.stage === 2).length, 8);
+// находки: части складываются в слово, без повторов; карточки — все нужные + 3 лишние того же вида, без повторов
+const F = DD.FINDS; assert.strictEqual(new Set(F.map(f => f.id)).size, F.length);
+for (const f of F) { assert.strictEqual(f.parts.join(''), f.w, f.w); assert.strictEqual(new Set(f.parts).size, f.parts.length, f.w + ': части без повторов'); assert(f.fact.length < 90 && f.e);
+  for (let s = 1; s <= 10; s++) { const t = DL.ftiles(f, DL.rng(s)); assert(f.parts.every(p => t.includes(p)) && new Set(t).size === t.length && t.length === f.parts.length + 3, f.w + ': карточки');
+    assert(t.every(p => (p.length === 1) === (f.parts[0].length === 1)), f.w + ': буквы с буквами, слоги со слогами'); } }
+assert(F.slice(0, 3).every(f => f.parts.every(p => p.length === 1)), 'первые находки — короткие слова по буквам');
 console.log('ВСЁ ОК');

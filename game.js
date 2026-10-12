@@ -51,7 +51,7 @@ const today = () => new Date().toDateString();
 // ─── парк: динозавры гуляют, птеранодон летает ───
 let walkers = [], last = performance.now();
 function park(fresh = -1) {
-  $('park').hidden = false; $('dig').hidden = true; ['hungry', 'prof', 'size', 'stories', 'story', 'sent', 'ward', 'gamesSheet'].forEach(id => $(id).hidden = true); if (HG) HG.done = true;
+  $('park').hidden = false; $('dig').hidden = true; ['hungry', 'prof', 'size', 'stories', 'story', 'sent', 'ward', 'mus', 'gamesSheet'].forEach(id => $(id).hidden = true); if (HG) HG.done = true;
   $('hello').textContent = name() ? `Палеонтолог ${name()}` : '';
   $('count').textContent = found >= DINOS.length ? `Все ${DINOS.length} динозавров найдены! 🏆` : `🦕 В парке: ${found} из ${DINOS.length}`;
   const next = DINOS[Math.min(found, DINOS.length - 1)];
@@ -74,11 +74,11 @@ function park(fresh = -1) {
     box.appendChild(el);
     walkers.push({ el, w, lo, hi, x: swim ? lo + Math.random() * (hi - lo) : i === fresh ? W * 0.6 : Math.random() * (W - w), dir: Math.random() < 0.5 ? -1 : 1, v: (flyer ? 60 : swim ? 30 : 18 + Math.random() * 16) * depth, rest: 0, flyer: flyer || swim });
   });
-  DL.babies(train).forEach((id, i, all) => {                                           // малыши из яйца — маленькие, впереди, прыгают
+  DL.grow(train).forEach(({ id, stage }, i, all) => {                                  // малыши из яйца — впереди, прыгают; от тренировок растут: малыш → подросток → взрослый
     const d = DINOS.find(x => x.id === id), el = document.createElement('div');
     el.className = 'pd baby' + (fresh === 'baby' && i === all.length - 1 ? ' new' : ''); el.innerHTML = `<div class="flip">${dimg(d)}</div>`;
-    const w = k * 0.15; el.style.width = w + 'px'; el.style.bottom = H * 0.15 + (i % 2) * 14 + 'px'; el.style.zIndex = 14;
-    el.onclick = () => card(d, true); box.appendChild(el);
+    const w = k * [0.15, 0.22, 0.3 * d.scale][stage]; el.style.width = w + 'px'; el.style.bottom = H * 0.15 + (i % 2) * 14 + 'px'; el.style.zIndex = 14;
+    el.onclick = () => card(d, stage + 1); box.appendChild(el);
     walkers.push({ el, w, lo: -w * 0.2, hi: W - w * 0.8, x: Math.random() * (W - w), dir: Math.random() < 0.5 ? -1 : 1, v: 26 + Math.random() * 14, rest: 0, flyer: false });
   });
   const bw = k * 0.15, be = document.createElement('div');                          // палеонтолог в своём наряде
@@ -87,7 +87,7 @@ function park(fresh = -1) {
   const B = DL.build(stars), BX = [0.1, 0.84, 0.34, 0.59, 0.22, 0.47, 0.71, 0.93];    // постройки у края поляны, за динозаврами; 5-я и дальше — второй ряд, мельче, в промежутках первого
   $('stars').textContent = B.next ? `⭐ ${stars} · ещё ${B.left} до ${B.next[0]}` : `⭐ ${stars} · парк построен 🏆`;
   DD.BUILDS.slice(0, B.n).forEach(([, n, id], i) => { const el = document.createElement('div'); el.className = 'bd' + (i > 3 ? ' far' : '') + (i === newB ? ' new' : ''); el.innerHTML = `<img src="builds/${id}.webp" alt="${n}" draggable="false">`; el.style.width = k * (i > 3 ? 0.17 : 0.22) + 'px';
-    el.style.left = BX[i] * 100 + '%'; el.style.bottom = H * (i > 3 ? 0.405 : 0.345) + 'px'; el.onclick = () => say(n, 0.9); box.appendChild(el); });
+    el.style.left = BX[i] * 100 + '%'; el.style.bottom = H * (i > 3 ? 0.405 : 0.345) + 'px'; el.onclick = id === 'museum' ? museum : () => say(n, 0.9); box.appendChild(el); });
   if (newB >= 0) { const n = DD.BUILDS[newB][1]; newB = -1; setTimeout(() => { leaves(); say('В парке новая постройка: ' + n + '!', 0.9); }, 500); }
 }
 $('stars').onclick = () => { const B = DL.build(stars); say(B.next ? `Звёзд: ${stars}. Ещё ${B.left}, и в парке появится ${B.next[1]}. Звёзды дают, когда читаешь сам.` : `Звёзд: ${stars}. Весь парк построен!`, 0.9); };
@@ -120,8 +120,9 @@ function card(d, baby = false) {
   $('cName').onclick = e => { const b = e.target.closest('button'); if (!b) return; say(b.dataset.all ? d.n : b.dataset.s, 0.7); };
   $('cFacts').onclick = e => { const b = e.target.closest('.fact'); if (b) say(d.facts[+b.dataset.f], 0.9); };
   if (!baby && golds().includes(d.id)) $('cType').textContent = '✨ Золотая находка · ' + $('cType').textContent;
-  if (baby) $('cType').textContent = 'Малыш! Вылупился, потому что ты ходил на самбо 🥋 · ' + $('cType').textContent;
-  $('card').hidden = false; say(baby ? 'Малыш ' + d.n.toLowerCase() + 'а' : d.n);
+  const nm = d.n.toLowerCase() + 'а';                                                // baby: 1 — малыш, 2 — подросток, 3 — вырос
+  if (baby) $('cType').textContent = ['', 'Малыш! Вылупился, потому что ты ходил на самбо 🥋', 'Подросток! Подрос, потому что ты ходил на самбо 🥋', 'Вырос! Ты ходил на самбо — и он стал взрослым 🥋'][baby] + ' · ' + $('cType').textContent;
+  $('card').hidden = false; say(['', 'Малыш ' + nm, 'Подросток ' + nm + ' — подрос на самбо!', d.n + ' вырос, потому что ты ходил на самбо!'][baby || 0] || d.n);
 }
 $('cClose').onclick = () => { $('card').hidden = true; speechSynthesis && speechSynthesis.cancel(); };
 
@@ -132,24 +133,27 @@ const digImg = new Image(); digImg.src = 'dig.jpg';
 const LAYERS = [{ fill: null, under: '#a8743f', stage: 'sil', say: 'Ого! Видно силуэт. Остался последний слой!' },
   { fill: '#a8743f', under: '#9a6a3a', stage: 'fossil', say: '' }];
 let cur = 0, sandCtx = null, brushN = 0, cleared = false, need = [], pos = 0, misses = 0, layer = 0;
-let goldRun = false, hinted = false;                                                // золотая раскопка: имя без голоса; 🔊 или подсветка — без золота
+let goldRun = false, hinted = false, curF = null;                                  // curF — находка для музея вместо динозавра
+const finds = () => readIds('dp_finds'), digs = () => +ls('dp_digs') || 0;
+const fimg = (f, mode = 'color') => f.img ? `<img class="di ${mode}" src="finds/${f.id}.webp" alt="${f.w}" draggable="false">` : `<span class="di fe ${mode}">${f.e}</span>`;                                                // золотая раскопка: имя без голоса; 🔊 или подсветка — без золота
 const golds = () => readIds('dp_gold');
 function dig(gold = false) {
   audio(); goldRun = gold; hinted = false;
   if (gold) { const g = golds(), left = DINOS.slice(0, found).map((d, i) => i).filter(i => !g.includes(DINOS[i].id)); cur = left.length ? pick(left) : Math.floor(Math.random() * found); }
   else cur = found < DINOS.length ? found : Math.floor(Math.random() * DINOS.length);
-  const d = DINOS[cur]; $('dig').classList.toggle('long', d.syl.length >= 5);   // длинное имя — компактнее яма и карточки, иначе на маленьком экране не влезает
+  const nf = DD.FINDS[finds().length]; curF = !gold && found && nf && (found >= DINOS.length || digs() % 2 === 1) ? nf : null;   // через раз — находка для музея
+  const d = DINOS[cur]; $('dig').classList.toggle('long', (curF ? curF.parts : d.syl).length >= 5);   // длинное имя — компактнее яма и карточки, иначе на маленьком экране не влезает
   $('park').hidden = true; $('dig').hidden = false; $('task').hidden = true; $('done').hidden = true;
-  $('fossil').className = ''; $('fossil').innerHTML = dimg(d, 'sil'); $('bar').style.visibility = '';
+  $('fossil').className = ''; $('fossil').innerHTML = curF ? fimg(curF, 'sil') : dimg(d, 'sil'); $('bar').style.visibility = '';
   const c = $('sand'); c.style.display = ''; c.style.opacity = 1;                    // сначала показать слой, потом мерить (иначе 0×0 и песка нет)
   const r = c.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1);
   c.width = r.width * dpr; c.height = r.height * dpr; sandCtx = c.getContext('2d'); sandCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
   layer = 0; cleared = false; brushN = 0; fillLayer();
-  say(gold ? 'Золотая раскопка! Счищай песок.' : found === 15 ? 'Вторая экспедиция! Здесь прячутся новые находки — даже морские ящеры. Счищай песок!' : found < DINOS.length ? 'Кто-то прячется в земле! Счищай песок со всего квадрата.' : 'Раскопай ещё раз!');
+  say(gold ? 'Золотая раскопка! Счищай песок.' : curF ? 'Тут что-то маленькое. Находка для музея! Счищай песок.' : found === 15 ? 'Вторая экспедиция! Здесь прячутся новые находки — даже морские ящеры. Счищай песок!' : found < DINOS.length ? 'Кто-то прячется в земле! Счищай песок со всего квадрата.' : 'Раскопай ещё раз!');
 }
 function fillLayer() {
   const c = $('sand'), r = c.getBoundingClientRect(), L = LAYERS[layer];
-  $('fossil').firstElementChild.className = 'di ' + L.stage; $('pit').style.backgroundColor = L.under;
+  const fe = $('fossil').firstElementChild; fe.classList.remove('sil', 'fossil', 'color'); fe.classList.add(L.stage); $('pit').style.backgroundColor = L.under;
   sandCtx.globalCompositeOperation = 'source-over'; sandCtx.fillStyle = L.fill || '#f2c27f'; sandCtx.fillRect(0, 0, r.width, r.height);
   if (!L.fill && digImg.complete && digImg.naturalWidth) {                            // верхний слой — тот же участок, что виден на фоне (как object-fit: cover)
     const k = Math.max(innerWidth / digImg.naturalWidth, innerHeight / digImg.naturalHeight), ox = (innerWidth - digImg.naturalWidth * k) / 2, oy = (innerHeight - digImg.naturalHeight * k) / 2;
@@ -179,28 +183,32 @@ function found3() {
 }
 ['pointerdown', 'pointermove'].forEach(ev => $('sand').addEventListener(ev, e => { if (ev === 'pointerdown' || e.buttons || e.pointerType === 'touch') brush(e); }));
 
+const quiet = () => goldRun || !!curF;                                               // золото и находки: голос части не называет — читаешь сам
 function nameTask() {
-  const d = DINOS[cur]; need = d.syl; pos = 0; misses = 0;
+  need = curF ? curF.parts : DINOS[cur].syl; pos = 0; misses = 0;
   $('slots').innerHTML = need.map((_, i) => `<div class="slot${i ? '' : ' cur'}"></div>`).join('');
-  $('tiles').innerHTML = DL.tiles(cur).map(s => `<button class="tile" data-s="${s}">${s}</button>`).join('');
-  $('task').hidden = false; $('digHint').textContent = goldRun ? '✨ Собери имя сам — без подсказок!' : 'Собери его имя!';
-  say(goldRun ? 'Собери его имя сам. Я не подсказываю! Получится — будет золотая находка.' : 'Собери его имя. Найди слог: ' + need[0], 0.8);
+  $('tiles').innerHTML = (curF ? DL.ftiles(curF) : DL.tiles(cur)).map(s => `<button class="tile" data-s="${s}">${s}</button>`).join('');
+  $('taskTitle').lastElementChild.textContent = curF ? 'Собери слово!' : 'Собери имя!';
+  $('task').hidden = false; $('digHint').textContent = curF ? 'Что это? Собери слово!' : goldRun ? '✨ Собери имя сам — без подсказок!' : 'Собери его имя!';
+  say(curF ? `Что это? Собери слово ${curF.parts[0].length === 1 ? 'из букв' : 'из слогов'}. Я не подсказываю!` : goldRun ? 'Собери его имя сам. Я не подсказываю! Получится — будет золотая находка.' : 'Собери его имя. Найди слог: ' + need[0], 0.8);
 }
-$('say').onclick = () => { if (goldRun) hinted = true; say(need[pos], 0.7); };
+$('say').onclick = () => { if (quiet()) hinted = true; say(need[pos], 0.7); };
 $('tiles').onclick = e => {
   const b = e.target.closest('.tile'); if (!b || b.classList.contains('used') || pos >= need.length) return;
   if (b.dataset.s === need[pos]) {
     b.classList.add('used'); const sl = $('slots').children[pos]; sl.textContent = need[pos]; sl.className = 'slot ok'; tone(659 + pos * 80, 0, 0.4, 0.1);
     pos++; misses = 0; document.querySelectorAll('.tile.hint').forEach(t => t.classList.remove('hint'));
-    if (pos < need.length) { $('slots').children[pos].classList.add('cur'); if (!goldRun) setTimeout(() => say(need[pos], 0.75), 350); }
+    if (pos < need.length) { $('slots').children[pos].classList.add('cur'); if (!quiet()) setTimeout(() => say(need[pos], 0.75), 350); }
     else setTimeout(alive, 500);
   } else {
-    b.classList.remove('no'); void b.offsetWidth; b.classList.add('no'); say(goldRun ? 'Не тот слог' : need[pos], 0.7);
-    if (++misses >= 2 && goldRun) hinted = true;
+    b.classList.remove('no'); void b.offsetWidth; b.classList.add('no'); say(quiet() ? (curF && need[0].length === 1 ? 'Не та буква' : 'Не тот слог') : need[pos], 0.7);
+    if (++misses >= 2 && quiet()) hinted = true;
     if (misses >= 2) [...$('tiles').children].find(t => !t.classList.contains('used') && t.dataset.s === need[pos])?.classList.add('hint');   // подсказка после двух промахов
   }
 };
 function alive() {
+  ls('dp_digs', digs() + 1);
+  if (curF) return foundFind(curF);
   const d = DINOS[cur], isNew = cur === found && found < DINOS.length;
   $('task').hidden = true; $('fossil').className = 'alive'; $('fossil').innerHTML = dimg(d);
   roar(); setTimeout(() => say(d.n + '! ' + (goldRun && !hinted ? 'Золотая находка! Ты прочитал имя сам!' : pick(PRAISE))), 700);
@@ -213,6 +221,24 @@ function alive() {
   if (isNew) { found++; ls('dp_found', found); }
   $('toPark').onclick = () => { speechSynthesis && speechSynthesis.cancel(); park(isNew ? found - 1 : -1); };
 }
+function foundFind(f) {                                                             // находка — в музей; собрал без подсказок — звезда
+  const fs = finds(); if (!fs.includes(f.id)) { fs.push(f.id); ls('dp_finds', JSON.stringify(fs)); }
+  $('task').hidden = true; $('fossil').className = 'alive'; $('fossil').innerHTML = fimg(f); chime(); leaves();
+  const self = !hinted, t = `${f.w}! Находка для музея.` + (self ? ' ⭐ Ты прочитал слово сам! +1 звезда в парк!' + built(addStar()) : '');
+  $('doneName').textContent = f.w; $('donePraise').textContent = t.slice(f.w.length + 2) + ` 🏛️ В музее: ${fs.length} из ${DD.FINDS.length}`; $('done').hidden = false; $('digHint').textContent = '';
+  setTimeout(() => say(f.w + '! ' + f.fact + (self ? ' Ты прочитал слово сам — звёздочка!' : ''), 0.9), 500);
+  $('toPark').onclick = () => { speechSynthesis && speechSynthesis.cancel(); park(); };
+}
+// ─── Музей находок: что нашёл на раскопках; нажал — слово и факт голосом ───
+function museum() {
+  audio(); const fs = finds(); $('park').hidden = true; $('mus').hidden = false;
+  $('musTitle').textContent = `🏛️ Музей · ${fs.length} из ${DD.FINDS.length}`;
+  $('musList').innerHTML = DD.FINDS.map(f => fs.includes(f.id) ? `<button data-id="${f.id}">${fimg(f)}<b>${f.w}</b></button>` : '<button class="no" disabled><span class="di fe">❓</span><b>…</b></button>').join('');
+  say(fs.length ? 'Музей находок. Нажми на находку — расскажу о ней.' : 'Музей пока пустой. Находки попадаются на раскопках!', 0.9);
+}
+$('musList').onclick = e => { const b = e.target.closest('button[data-id]'); if (!b) return; const f = DD.FINDS.find(x => x.id === b.dataset.id); say(f.w + '. ' + f.fact, 0.9); toast(`${f.e} ${f.fact}`, 3500); };
+$('musBtn').onclick = museum;
+$('musBack').onclick = () => { speechSynthesis && speechSynthesis.cancel(); park(); };
 function leaves() { for (let i = 0; i < 26; i++) { const l = document.createElement('div'); l.className = 'leaf'; l.textContent = pick(['🍃', '🌿', '⭐', '🦴']);
   l.style.left = Math.random() * 100 + 'vw'; l.style.top = '-30px'; l.style.setProperty('--dx', (Math.random() * 120 - 60) + 'px'); l.style.animationDelay = Math.random() * 0.6 + 's';
   document.body.appendChild(l); setTimeout(() => l.remove(), 3200); } }
@@ -238,7 +264,8 @@ $('gNo').onclick = () => { $('gate').hidden = true; };
 $('gOk').onclick = () => {
   if (+$('gIn').value !== gateA) { $('gErr').textContent = 'Неверно — это вопрос для взрослых 🙂'; return; }
   $('gate').hidden = true; const before = DL.belt(train).name; train++; ls('dp_train', train); ls('dp_lastTrain', today());
-  const nb = DL.belt(train).name, beltUp = nb !== before ? ` Новый дино-пояс: ${nb}!` : '';
+  const g0 = DL.grow(train - 1), ups = DL.grow(train).filter((x, i) => g0[i] && x.stage > g0[i].stage).map(x => { const d = DINOS.find(y => y.id === x.id); return x.stage === 1 ? `Малыш ${d.n.toLowerCase()}а подрос!` : `${d.n} вырос!`; });
+  const nb = DL.belt(train).name, beltUp = (nb !== before ? ` Новый дино-пояс: ${nb}!` : '') + (ups.length ? ' ' + ups.join(' ') : '');
   if (DL.cracks(train) === 0) return hatch(beltUp);
   chime(); park(); $('egg').classList.add('wob'); const left = 3 - DL.cracks(train);
   say(`Молодец, что сходил на самбо! Яйцо треснуло. Ещё ${left} ${left === 1 ? 'тренировка' : 'тренировки'}!${beltUp}`); toast(`🥋 Тренировка засчитана! Яйцо треснуло.${beltUp}`);
