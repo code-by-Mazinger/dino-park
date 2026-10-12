@@ -78,4 +78,6 @@ assert(F.slice(0, 3).every(f => f.parts.every(p => p.length === 1)), 'первы
 for (const f of F) assert(!f.img || (require('fs').existsSync(__dirname + '/finds/' + f.id + '.webp') && require('fs').readFileSync(__dirname + '/sw.js', 'utf8').includes(`finds/${f.id}.webp`)), f.w + ': картинка есть и в кэше');
 // силуэт в яйце — тот, кто вылупится на ближайшей тройке тренировок
 for (let n = 0; n < 40; n++) { const h = n + 3 - (n % 3); assert.strictEqual(DL.nextBaby(n), DL.babies(h).slice(-1)[0], 'яйцо на ' + n); }
+// приёмы самбо: id без повторов, анимация из известных, описание короткое
+assert.strictEqual(new Set(DD.MOVES.map(m => m.id)).size, DD.MOVES.length); assert(DD.MOVES.every(m => ['fall', 'roll', 'trip', 'throw', 'hold'].includes(m.a) && m.d.length < 80 && m.n));
 console.log('ВСЁ ОК');

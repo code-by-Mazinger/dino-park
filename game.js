@@ -57,7 +57,7 @@ function park(fresh = -1) {
   if (found <= PV1) pv = 0;
   $('park').classList.toggle('v2', pv === 1); $('pvBtn').hidden = found <= PV1;
   $('pvBtn').className = pv ? 'l' : 'r'; $('pvBtn').textContent = pv ? '◀ Парк' : 'Долина ▶';
-  $('park').hidden = false; $('dig').hidden = true; ['hungry', 'prof', 'size', 'stories', 'story', 'sent', 'ward', 'mus', 'gamesSheet'].forEach(id => $(id).hidden = true); if (HG) HG.done = true;
+  $('park').hidden = false; $('dig').hidden = true; ['hungry', 'prof', 'size', 'stories', 'story', 'sent', 'ward', 'mus', 'moves', 'gamesSheet'].forEach(id => $(id).hidden = true); if (HG) HG.done = true;
   $('hello').textContent = (name() ? `Палеонтолог ${name()}` : '') + (pv ? ' · Долина экспедиции' : '');
   $('count').textContent = found >= DINOS.length ? `Все ${DINOS.length} динозавров найдены! 🏆` : `🦕 В парке: ${found} из ${DINOS.length}`;
   const next = DINOS[Math.min(found, DINOS.length - 1)];
@@ -289,10 +289,37 @@ $('gOk').onclick = () => {
   $('gate').hidden = true; const before = DL.belt(train).name; train++; ls('dp_train', train); ls('dp_lastTrain', today());
   const g0 = DL.grow(train - 1), ups = DL.grow(train).filter((x, i) => g0[i] && x.stage > g0[i].stage).map(x => { const d = DINOS.find(y => y.id === x.id); return x.stage === 1 ? `Малыш ${d.n.toLowerCase()}а подрос!` : `${d.n} вырос!`; });
   const nb = DL.belt(train).name, beltUp = (nb !== before ? ` Новый дино-пояс: ${nb}!` : '') + (ups.length ? ' ' + ups.join(' ') : '');
-  if (DL.cracks(train) === 0) return hatch(beltUp);
-  chime(); park(); $('egg').classList.add('wob'); const left = 3 - DL.cracks(train);
-  say(`Молодец, что сходил на самбо! Яйцо треснуло. Ещё ${left} ${left === 1 ? 'тренировка' : 'тренировки'}!${beltUp}`); toast(`🥋 Тренировка засчитана! Яйцо треснуло.${beltUp}`);
+  moveAsk(() => {                                                                    // сначала взрослый выбирает приём, потом — яйцо
+    if (DL.cracks(train) === 0) return hatch(beltUp);
+    chime(); park(); $('egg').classList.add('wob'); const left = 3 - DL.cracks(train);
+    say(`Молодец, что сходил на самбо! Яйцо треснуло. Ещё ${left} ${left === 1 ? 'тренировка' : 'тренировки'}!${beltUp}`); toast(`🥋 Тренировка засчитана! Яйцо треснуло.${beltUp}`);
+  });
 };
+// ─── Приём недели: после тренировки взрослый отмечает, что разучивали; малыш-динозавр показывает приём, он попадает в альбом ───
+const movesGot = () => { try { return JSON.parse(ls('dp_moves') || '{}'); } catch (e) { return {}; } };
+let moveNext = null;
+function moveAsk(then) {
+  moveNext = then; $('mvAskList').innerHTML = DD.MOVES.map(m => `<button data-id="${m.id}">${m.n}</button>`).join(''); $('mvAsk').hidden = false;
+}
+$('mvAskList').onclick = e => { const b = e.target.closest('button'); if (!b) return; const g = movesGot(); g[b.dataset.id] = (g[b.dataset.id] || 0) + 1; ls('dp_moves', JSON.stringify(g));
+  $('mvAsk').hidden = true; moveCard(DD.MOVES.find(m => m.id === b.dataset.id), g[b.dataset.id] === 1); };
+$('mvSkip').onclick = () => { $('mvAsk').hidden = true; const t = moveNext; moveNext = null; t && t(); };
+function moveCard(m, first) {                                                         // first — новый приём в альбоме
+  const a = DINOS.find(d => d.id === (DL.babies(train).slice(-1)[0] || 'trex')), b = DINOS.find(d => d.id === (a.id === 'stego' ? 'trike' : 'stego'));
+  $('mvStage').className = 'mv-' + m.a; $('mvStage').innerHTML = `<div class="mvA">${dimg(a)}</div>` + (['trip', 'throw', 'hold'].includes(m.a) ? `<div class="mvB">${dimg(b)}</div>` : '');
+  $('mvName').textContent = m.n; $('mvText').textContent = m.d; $('mvTag').textContent = first ? '🥋 Новый приём в альбоме!' : `🥋 Приём недели · разучивал ${movesGot()[m.id] || 1} ${plural(movesGot()[m.id] || 1, 'раз', 'раза', 'раз')}`;
+  $('mvCard').hidden = false; chime(); say(`${m.n}. ${m.d}`, 0.85);
+}
+$('mvSay').onclick = () => say(`${$('mvName').textContent}. ${$('mvText').textContent}`, 0.85);
+$('mvOk').onclick = () => { $('mvCard').hidden = true; speechSynthesis && speechSynthesis.cancel(); const t = moveNext; moveNext = null; if (t) t(); else if (!$('moves').hidden) movesOpen(); };
+function movesOpen() {
+  audio(); const g = movesGot(), n = DD.MOVES.filter(m => g[m.id]).length; $('park').hidden = true; $('moves').hidden = false;
+  $('mvTitle').textContent = `🥋 Приёмы · ${n} из ${DD.MOVES.length}`;
+  $('mvList').innerHTML = DD.MOVES.map(m => g[m.id] ? `<button data-id="${m.id}"><b>${m.n}</b><small>разучивал ×${g[m.id]}</small></button>` : '<button class="no" disabled><b>❓</b><small>разучишь на самбо</small></button>').join('');
+}
+$('mvList').onclick = e => { const b = e.target.closest('button[data-id]'); if (b) moveCard(DD.MOVES.find(m => m.id === b.dataset.id), false); };
+$('movesBtn').onclick = movesOpen;
+$('mvBack').onclick = () => { speechSynthesis && speechSynthesis.cancel(); park(); };
 function hatch(beltUp) {                                                              // яйцо качается, раскалывается — малыш
   const id = DL.babies(train).slice(-1)[0], d = DINOS.find(x => x.id === id);
   $('hPic').innerHTML = eggSVG(2, false, id); $('hPic').className = 'crack';
