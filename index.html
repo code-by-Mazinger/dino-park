@@ -119,7 +119,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:0}
 .pd.sleep::after{content:"💤";position:absolute;left:55%;top:-8px;font-size:20px;animation:zz 2s ease-in-out infinite;pointer-events:none}
 @keyframes zz{50%{transform:translate(6px,-8px);opacity:.6}}
 #park.night #top{z-index:25}
-#taleBtn{white-space:nowrap;position:absolute;left:50%;transform:translateX(-50%);top:46%;z-index:31;padding:12px 18px;border-radius:999px;background:#ffe9a8;font-weight:900;font-size:19px;box-shadow:0 0 22px rgba(255,230,140,.8),0 5px 0 #c9a26a}
+#taleBtn{white-space:nowrap;position:absolute;left:50%;transform:translateX(-50%);top:34%;z-index:31;padding:12px 18px;border-radius:999px;background:#ffe9a8;font-weight:900;font-size:19px;box-shadow:0 0 22px rgba(255,230,140,.8),0 5px 0 #c9a26a}
 #tale{position:fixed;left:10px;right:10px;bottom:calc(env(safe-area-inset-bottom) + 10px);z-index:40;padding:14px;border-radius:24px;background:rgba(20,26,60,.94);color:#fff;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 #tlCount{font-weight:800;color:#c8d2ff}#tlText{font-size:clamp(22px,6.4vw,28px);font-weight:900;line-height:1.3;margin:8px 0 12px;min-height:2.6em}
 #tlRow{display:flex;gap:10px;justify-content:center}#tlSay{width:56px;border-radius:18px;background:#3a4380;font-size:24px}
@@ -145,8 +145,13 @@ button{font:inherit;color:inherit;cursor:pointer;border:0}
 #mvList button{padding:14px 6px;border-radius:18px;background:#fffaf0;box-shadow:0 4px 0 #d8c7a6;display:flex;flex-direction:column;align-items:center;gap:4px}
 #mvList button b{font-size:18px;line-height:1.15}#mvList button small{font-size:13px;color:#8a6d3b}#mvList button.no{opacity:.55}
 #park.v2 #bg{transform:scaleX(-1);filter:hue-rotate(-18deg) saturate(1.15) brightness(.97)}   /* Долина — временный фон: зеркальный парк, пока нет своей картинки */
-#pvBtn{position:absolute;top:44%;z-index:30;padding:10px 14px;border-radius:999px;background:rgba(255,255,255,.9);font-weight:900;font-size:17px;box-shadow:0 4px 0 rgba(0,0,0,.2)}
-#pvBtn.r{right:8px}#pvBtn.l{left:8px}
+.pvb{position:absolute;top:44%;z-index:30;padding:10px 14px;border-radius:999px;background:rgba(255,255,255,.9);font-weight:900;font-size:17px;box-shadow:0 4px 0 rgba(0,0,0,.2)}
+#pvNext{right:8px}#pvPrev{left:8px}
+#snow{display:none;position:absolute;inset:0;z-index:19;pointer-events:none;
+  background-image:radial-gradient(3px 3px at 20px 30px,#fff 50%,transparent 51%),radial-gradient(2px 2px at 80px 120px,#fff 50%,transparent 51%),radial-gradient(3px 3px at 150px 60px,#fff 50%,transparent 51%),radial-gradient(2px 2px at 220px 160px,#fff 50%,transparent 51%);
+  background-size:260px 200px;animation:snow 9s linear infinite}
+#park.v3 #snow{display:block}@keyframes snow{to{background-position:40px 200px,-30px 200px,20px 200px,-10px 200px}}
+#dig.ice::before{content:"";position:absolute;inset:0;background:rgba(210,232,255,.45);pointer-events:none;z-index:0}
 #guessEgg{width:120px;margin:0 auto}#guessEgg svg{width:100%;height:auto;display:block}
 #guessOpts{display:flex;flex-direction:column;gap:8px;margin:10px 0}
 #guessOpts button{padding:12px;border-radius:16px;background:#f3ead8;font-weight:900;font-size:22px;box-shadow:0 4px 0 #d8c7a6}#guessOpts button.on{background:#bff0c5}
@@ -281,7 +286,8 @@ h2{margin:6px 0;font-size:26px}
 <body>
 <div class="scr" id="park">
   <img id="bg" src="park.jpg" alt="">
-  <button id="pvBtn" hidden></button>
+  <button id="pvPrev" class="pvb" hidden></button><button id="pvNext" class="pvb" hidden></button>
+  <div id="snow"></div>
   <div id="night"><i class="moon">🌙</i><b></b><b></b><b></b><b></b><b></b><b></b></div>
   <button id="mailBtn" class="round" aria-label="Письмо" hidden>📬</button>
   <button id="taleBtn" hidden>🌙 Сказка на ночь</button>

@@ -8,20 +8,21 @@ for (const [k, d] of DINOS.entries()) {
   assert.strictEqual(d.syl.join('').toLowerCase(), d.n.toLowerCase(), d.n + ': слоги = имя');
   assert(d.facts.length >= 3 && d.facts.every(f => f.length < 90), d.n + ': три коротких факта');
   assert(d.wrong.length === 2 && d.wrong.every(t => t.length < 90) && !d.facts.includes(d.wrong[0]), d.n + ': ошибка профессора и поправка');
-  assert(['plants', 'meat', 'fish', 'omni'].includes(d.diet) && ['юрский', 'меловой'].includes(d.period));
+  assert(['plants', 'meat', 'fish', 'omni'].includes(d.diet) && ['юрский', 'меловой', 'ледниковый'].includes(d.period));
   for (let s = 1; s <= 20; s++) {
     const t = DL.tiles(k, DL.rng(s));
     assert(d.syl.every(x => t.includes(x)), d.n + ': все слоги есть');
     assert.strictEqual(t.length, new Set(t).size, d.n + ': карточки без повторов');
     assert.strictEqual(t.length, d.syl.length + DL.extra(k));
   }
-  if (k) assert(d.syl.length >= DINOS[0].syl.length, 'первый — из самых коротких');
+  if (k && k < 15) assert(d.syl.length >= DINOS[0].syl.length, 'первый — из самых коротких');
 }
 // сначала короткие имена: среди первых пяти нет пятисложных
 assert(DINOS.slice(0, 5).every(d => d.syl.length <= 4) && DINOS.slice(12, 15).every(d => d.syl.length === 5));
 // вторая экспедиция: имена не короче предыдущих, у морских — пометка «не динозавр»
-DINOS.slice(16).forEach((d, i) => assert(d.syl.length >= DINOS[15 + i].syl.length, d.n + ': имена от коротких к длинным'));
-DINOS.filter(d => d.swim || d.fly).forEach(d => assert(/не динозавр/.test(d.kind), d.n + ': пометка «не динозавр»'));
+DINOS.slice(16, 25).forEach((d, i) => assert(d.syl.length >= DINOS[15 + i].syl.length, d.n + ': имена от коротких к длинным'));
+DINOS.slice(26).forEach((d, i) => assert(d.syl.length >= DINOS[25 + i].syl.length, d.n + ': звери ледника — от коротких к длинным'));
+DINOS.filter(d => d.swim || d.fly || d.period === 'ледниковый').forEach(d => assert(/не динозавр/.test(d.kind), d.n + ': пометка «не динозавр»'));
 // самбо: пояс, трещины, малыши
 assert.strictEqual(DL.belt(0).name, 'белый'); assert.strictEqual(DL.belt(2).left, 1); assert.strictEqual(DL.belt(3).name, 'жёлтый');
 assert.strictEqual(DL.belt(29).name, 'коричневый'); assert.strictEqual(DL.belt(30).name, 'чёрный'); assert.strictEqual(DL.belt(99).left, 0);
@@ -90,4 +91,6 @@ for (let sd = 1; sd < 30; sd++) assert(DL.letter(null, { name: 'Рома', found
 assert(DL.letter({ t: 'find', id: 'paw' }, c0).lines.join(' ').includes('нашёл лапу') && DL.letter(null, { name: '', found: 1, babies: [] }).lines[0] === 'Привет, палеонтолог!', 'падеж и обращение');
 // сказки: по 6 коротких предложений; ночь — с 20 до 7
 assert(DL.TALES.every(t => t.length === 6 && t.every(x => x.length < 45))); assert(DL.isNight(21) && DL.isNight(3) && !DL.isNight(7) && !DL.isNight(19));
+assert(DL.compare(DD.DINOS.find(d => d.id === 'giganto'), 120).text.includes('ростом') && DL.compare(DD.DINOS.find(d => d.id === 'giganto'), 120).text.includes('на плечи'), 'рост гигантопитека');
+assert(require('fs').existsSync(__dirname + '/ice.jpg') && require('fs').readFileSync(__dirname + '/sw.js', 'utf8').includes("'ice.jpg'"), 'фон Ледника есть и в кэше');
 console.log('ВСЁ ОК');

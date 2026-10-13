@@ -46,8 +46,8 @@ function prof(found, r = Math.random) {
 // «Я и динозавры»: во сколько раз динозавр длиннее ребёнка (у птеранодона — размах крыльев)
 const num = x => String(x).replace('.', ',');
 function compare(d, cm) {
-  const h = cm / 100, k = d.len / h, what = d.fly ? `Размах крыльев ${d.n.toLowerCase()}а — около ${num(d.len)}\u00a0м.` : `${d.n} длиной около ${num(d.len)}\u00a0м.`;
-  if (k >= 2) return { k: Math.round(k), text: `${what} Это ${Math.round(k)} таких, как ты, если лечь в ряд!` };
+  const h = cm / 100, k = d.len / h, what = d.fly ? `Размах крыльев ${d.n.toLowerCase()}а — около ${num(d.len)}\u00a0м.` : d.tall ? `${d.n} ростом около ${num(d.len)}\u00a0м.` : `${d.n} длиной около ${num(d.len)}\u00a0м.`;
+  if (k >= 2) return { k: Math.round(k), text: `${what} Это ${Math.round(k)} таких, как ты, ${d.tall ? 'если встать друг другу на плечи' : 'если лечь в ряд'}!` };
   if (k > 1.15) return { k: 1, text: `${what} Он чуть больше тебя!` };
   return { k: 0, text: `${what} Он меньше тебя — ты выше компсогната!`.replace('компсогната', d.n.toLowerCase() + 'а') };
 }
