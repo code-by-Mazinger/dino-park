@@ -42,11 +42,17 @@ for (const ev of ['pointerdown', 'touchend']) addEventListener(ev, audio, { pass
 let found = Math.min(DINOS.length, +ls('dp_found') || 0);                            // сколько динозавров уже в парке (по порядку)
 const name = () => ls('dp_name') || '';
 let stars = +ls('dp_stars') || 0, newB = -1;                                        // звёзды «прочитал сам» копятся на постройки в парке
-function addStar() { const was = DL.build(stars).n; ls('dp_stars', ++stars);
+function addStar() { const was = DL.build(stars).n; ls('dp_stars', ++stars); stat((s, d) => d.self++);   // звезда даётся за чтение сам — это и есть «сам» в отчёте
   const nw = BOY.ITEMS.find(x => x.need === stars); if (nw) setTimeout(() => toast(`👕 В гардеробе новая вещь: ${nw.n}!`, 3500), 1500); if (DL.build(stars).n === was) return null; newB = was; return DD.BUILDS[was]; }
 const built = b => b ? ` 🏗️ В парке появилось: ${b[1]}!` : '';
 let train = +ls('dp_train') || 0;
-const logEv = e => { let v = []; try { v = JSON.parse(ls('dp_ev') || '[]'); } catch (x) {} v.push(e); ls('dp_ev', JSON.stringify(v.slice(-10))); };   // для писем от динозавров                                                    // тренировок по самбо (отмечает взрослый)
+const dk = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };   // день по часам телефона
+const logEv = e => { let v = []; try { v = JSON.parse(ls('dp_ev') || '[]'); } catch (x) {} v.push({ ...e, d: dk() }); ls('dp_ev', JSON.stringify(v.slice(-10))); };
+// Статистика чтения для отчёта взрослым (только на телефоне): по дням — сам/с подсказкой, по слогам — верно/ошибка, путаницы, подсказки по играм
+const stGet = () => { try { return Object.assign({ days: {}, syl: {}, conf: {}, hint: {} }, JSON.parse(ls('dp_st') || '{}')); } catch (e) { return { days: {}, syl: {}, conf: {}, hint: {} }; } };
+const stat = f => { const s = stGet(); f(s, s.days[dk()] = s.days[dk()] || { self: 0, help: 0 }); ls('dp_st', JSON.stringify(s)); };
+const statHelp = g => stat((s, d) => { d.help++; s.hint[g] = (s.hint[g] || 0) + 1; });
+const statSyl = (syl, ok, got) => stat(s => { const v = s.syl[syl] = s.syl[syl] || { ok: 0, miss: 0 }; ok ? v.ok++ : v.miss++; if (!ok && got) s.conf[syl + '→' + got] = (s.conf[syl + '→' + got] || 0) + 1; });   // для писем от динозавров                                                    // тренировок по самбо (отмечает взрослый)
 const today = () => new Date().toDateString();
 
 // ─── парк: динозавры гуляют, птеранодон летает ───
@@ -60,7 +66,7 @@ function park(fresh = -1) {
   $('park').classList.toggle('v2', pv === 1); $('park').classList.toggle('v3', pv === 2); const bgs = pv === 2 ? 'ice.jpg' : 'park.jpg'; if (!$('bg').src.endsWith(bgs)) $('bg').src = bgs;
   $('pvPrev').hidden = pv === 0; $('pvNext').hidden = pv >= pvMax();
   if (pv > 0) $('pvPrev').textContent = '◀ ' + PVS[pv - 1].name; if (pv < pvMax()) $('pvNext').textContent = PVS[pv + 1].name + ' ▶';
-  $('park').hidden = false; $('dig').hidden = true; mailBadge(); nightSet(); ['hungry', 'prof', 'size', 'stories', 'story', 'sent', 'ward', 'mus', 'moves', 'gamesSheet'].forEach(id => $(id).hidden = true); if (HG) HG.done = true;
+  $('park').hidden = false; $('dig').hidden = true; mailBadge(); nightSet(); ['hungry', 'prof', 'size', 'stories', 'story', 'sent', 'ward', 'mus', 'moves', 'diary', 'report', 'gamesSheet'].forEach(id => $(id).hidden = true); if (HG) HG.done = true;
   $('hello').textContent = (name() ? `Палеонтолог ${name()}` : '') + ['', ' · Долина экспедиции', ' · Ледник'][pv];
   $('count').textContent = found >= DINOS.length ? `Все ${DINOS.length} видов найдены! 🏆` : `🦕 В парке: ${found} из ${DINOS.length}`;
   const next = DINOS[Math.min(found, DINOS.length - 1)];
@@ -106,8 +112,9 @@ function park(fresh = -1) {
 const jget = (k, d) => { try { return JSON.parse(ls(k) || 'null') ?? d; } catch (e) { return d; } };
 function mailToday() {
   let m = jget('dp_mail', null); if (!found) return null;
-  if (!m || m.date !== today()) { const ev = jget('dp_ev', []); ls('dp_ev', '[]');
-    m = { date: today(), ...DL.letter(ev.slice(-1)[0] || null, { name: name(), found, babies: DL.babies(train) }), read: false, done: false, heard: false }; ls('dp_mail', JSON.stringify(m)); }
+  if (!m || m.date !== today()) { const ev = jget('dp_ev', []).filter(e => ['train', 'hatch', 'find', 'new', 'gold'].includes(e.t)); ls('dp_ev', '[]');
+    const di = ls('dp_diaryNew') ? jget('dp_diary', []).slice(-1)[0] : null; ls('dp_diaryNew', '');   // вчера писал дневник — динозавр отвечает на запись
+    m = { date: today(), ...DL.letter(di ? { t: 'diary', text: di.text } : ev.slice(-1)[0] || null, { name: name(), found, babies: DL.babies(train) }), read: false, done: false, heard: false }; ls('dp_mail', JSON.stringify(m)); }
   return m;
 }
 function mailBadge() { const m = mailToday(); $('mailBtn').hidden = !m; $('mailBtn').classList.toggle('new', !!m && !m.read); }
@@ -118,11 +125,11 @@ function mailOpen() {
   const d = DINOS.find(x => x.id === m.from); $('mlPic').innerHTML = m.done ? dimg(d) : '✉️'; $('mlFeed').textContent = m.done ? `Это написал ${d.n.toLowerCase()}!` : '';
   $('mail').hidden = false; if (!m.done) say('Тебе письмо! Прочитай его сам. Если трудно — нажми на строчку.', 0.9);
 }
-$('mlText').onclick = e => { const b = e.target.closest('.sent'); if (!b) return; const m = mailToday(); m.heard = true; ls('dp_mail', JSON.stringify(m)); say(m.lines[+b.dataset.k], 0.85); };
+$('mlText').onclick = e => { const b = e.target.closest('.sent'); if (!b) return; statHelp('Письма'); const m = mailToday(); m.heard = true; ls('dp_mail', JSON.stringify(m)); say(m.lines[+b.dataset.k], 0.85); };
 $('mlAns').onclick = e => {
   const b = e.target.closest('button'); if (!b || b.disabled) return; const m = mailToday(), d = DINOS.find(x => x.id === m.from);
   if (b.dataset.id !== m.from) { m.miss = true; ls('dp_mail', JSON.stringify(m)); b.classList.remove('no'); void b.offsetWidth; b.classList.add('no'); $('mlFeed').textContent = 'Не он. Перечитай письмо — там написано!'; say('Не он. Перечитай письмо!', 0.9); return; }
-  m.done = true; ls('dp_mail', JSON.stringify(m)); b.classList.add('yes'); $('mlPic').innerHTML = dimg(d); chime(); leaves();
+  m.done = true; ls('dp_mail', JSON.stringify(m)); logEv({ t: 'mail' }); b.classList.add('yes'); $('mlPic').innerHTML = dimg(d); chime(); leaves();
   const self = !m.heard && !m.miss, t = `Правильно! Это написал ${d.n.toLowerCase()}.` + (self ? ' ⭐ Ты прочитал письмо сам! +1 звезда в парк!' + built(addStar()) : '');
   $('mlFeed').textContent = t; say(t.replace('⭐ ', ''), 0.9); [...$('mlAns').children].forEach(x => x.disabled = true);
 };
@@ -140,13 +147,13 @@ function taleOpen() {
   $('taleBtn').hidden = true; $('tale').hidden = false; taleShow(); say('Сказка на ночь. Читай малышам по одному предложению — и они уснут.', 0.85);
 }
 function taleShow() { $('tlText').textContent = TL.t[TL.i]; $('tlCount').textContent = `💤 ${TL.i} из ${TL.t.length}`; $('tlNext').textContent = 'Прочитал ▶'; }
-$('tlSay').onclick = () => { if (!TL) return; TL.heard = true; say(TL.t[TL.i], 0.8); };
+$('tlSay').onclick = () => { if (!TL) return; TL.heard = true; statHelp('Сказка'); say(TL.t[TL.i], 0.8); };
 $('tlNext').onclick = () => {
   if (!TL) return; if (TL.done) { $('tale').hidden = true; TL = null; return; }
   const awake = walkers.filter(a => !a.el.classList.contains('sleep')).sort(() => Math.random() - 0.5);   // засыпают поровну на каждое предложение
   awake.slice(0, Math.ceil(awake.length / (TL.t.length - TL.i))).forEach(a => { a.rest = 1e9; a.el.classList.add('sleep'); });
   if (++TL.i < TL.t.length) { tone(392, 0, 0.5, 0.05); return taleShow(); }
-  sleepAll(); TL.done = true; ls('dp_tale', nightKey()); ls('dp_taleN', (+ls('dp_taleN') || 0) + 1);
+  sleepAll(); TL.done = true; ls('dp_tale', nightKey()); logEv({ t: 'tale' }); ls('dp_taleN', (+ls('dp_taleN') || 0) + 1);
   const self = !TL.heard, t = `Все уснули. Спокойной ночи${name() ? ', ' + name() : ''}!` + (self ? ' ⭐ Ты прочитал сказку сам! +1 звезда в парк!' + built(addStar()) : '');
   $('tlText').textContent = t; $('tlCount').textContent = `💤 ${TL.t.length} из ${TL.t.length}`; $('tlNext').textContent = 'Закрыть'; say(t.replace('⭐ ', ''), 0.8);
 };
@@ -258,9 +265,10 @@ function nameTask() {
   $('task').hidden = false; $('digHint').textContent = curF ? 'Что это? Собери слово!' : goldRun ? '✨ Собери имя сам — без подсказок!' : 'Собери его имя!';
   say(curF ? `Что это? Собери слово ${curF.parts[0].length === 1 ? 'из букв' : 'из слогов'}. Я не подсказываю!` : goldRun ? 'Собери его имя сам. Я не подсказываю! Получится — будет золотая находка.' : 'Собери его имя. Найди слог: ' + need[0], 0.8);
 }
-$('say').onclick = () => { if (quiet()) hinted = true; say(need[pos], 0.7); };
+$('say').onclick = () => { if (quiet()) hinted = true; statHelp(curF ? 'Находки' : 'Раскопки'); say(need[pos], 0.7); };
 $('tiles').onclick = e => {
   const b = e.target.closest('.tile'); if (!b || b.classList.contains('used') || pos >= need.length) return;
+  statSyl(need[pos], b.dataset.s === need[pos], b.dataset.s);
   if (b.dataset.s === need[pos]) {
     b.classList.add('used'); const sl = $('slots').children[pos]; sl.textContent = need[pos]; sl.className = 'slot ok'; tone(659 + pos * 80, 0, 0.4, 0.1);
     pos++; misses = 0; document.querySelectorAll('.tile.hint').forEach(t => t.classList.remove('hint'));
@@ -337,13 +345,16 @@ $('guessNo').onclick = () => { $('guess').hidden = true; };
 $('egg').onclick = () => $('trainBtn').onclick();                                   // яйцо — тоже отметка тренировки, через пример для взрослых
 $('guessBtn').onclick = () => { audio(); guessOpen(); };                             // «Кто в яйце?» — пузырь над треснувшим яйцом
 let gateA = 0;
+let gateCb = null;                                                                    // пример для взрослых: отметить тренировку или открыть отчёт
+function gateAsk(what, ok, cb) { const g = DL.gate(); gateA = g.a; gateCb = cb; $('gT').textContent = what; $('gOk').textContent = ok; $('gQ').textContent = g.q; $('gIn').value = ''; $('gErr').textContent = ''; $('gate').hidden = false; }
 $('trainBtn').onclick = () => {
   audio(); if (ls('dp_lastTrain') === today()) { toast('Сегодняшняя тренировка уже отмечена 💪'); return; }
-  const g = DL.gate(); gateA = g.a; $('gQ').textContent = g.q; $('gIn').value = ''; $('gErr').textContent = ''; $('gate').hidden = false;
+  gateAsk('Отметить тренировку по самбо.', 'Отметить', null);
 };
 $('gNo').onclick = () => { $('gate').hidden = true; };
 $('gOk').onclick = () => {
   if (+$('gIn').value !== gateA) { $('gErr').textContent = 'Неверно — это вопрос для взрослых 🙂'; return; }
+  if (gateCb) { const cb = gateCb; gateCb = null; $('gate').hidden = true; return cb(); }
   $('gate').hidden = true; const before = DL.belt(train).name; train++; ls('dp_train', train); ls('dp_lastTrain', today()); logEv({ t: 'train' });
   const g0 = DL.grow(train - 1), ups = DL.grow(train).filter((x, i) => g0[i] && x.stage > g0[i].stage).map(x => { const d = DINOS.find(y => y.id === x.id); return x.stage === 1 ? `Малыш ${d.n.toLowerCase()}а подрос!` : `${d.n} вырос!`; });
   const nb = DL.belt(train).name, beltUp = (nb !== before ? ` Новый дино-пояс: ${nb}!` : '') + (ups.length ? ' ' + ups.join(' ') : '');
@@ -405,7 +416,8 @@ function hungry() {
 }
 const listen = () => HG.eaten >= 5;                                                 // вторая половина — на слух
 function want() { $('hWant').innerHTML = `Хочу: ${!listen() || HG.misses >= 2 ? `<b>${HG.target}</b>` : '<b>?</b>'} 🔊`; }
-function nextTarget() { HG.target = pick(HG.pool.filter(x => x !== HG.target)); HG.misses = 0; want(); $('hScore').textContent = `🍖 ${HG.eaten} из 10`; }
+function nextTarget() { const hard = DL.hardSyl(stGet().syl, 3, 8).map(x => x.s).filter(x => HG.pool.includes(x) && x !== HG.target);   // трудные слоги — чаще
+  HG.target = hard.length && Math.random() < 0.5 ? pick(hard) : pick(HG.pool.filter(x => x !== HG.target)); HG.misses = 0; want(); $('hScore').textContent = `🍖 ${HG.eaten} из 10`; }
 function spawnCard() {                                                              // не больше трёх, без повторов, каждая — на своей дорожке
   const onScr = HG.cards.map(c => c.s), free = LANES.filter(x => !HG.cards.some(c => c.x === x && c.y < 40)); if (!free.length) return;
   const others = HG.pool.filter(x => x !== HG.target && !onScr.includes(x));
@@ -415,6 +427,7 @@ function spawnCard() {                                                          
 }
 function feed(c) {
   if (c.gone || HG.done) return;
+  statSyl(HG.target, c.s === HG.target, c.s);
   if (c.s !== HG.target) {                                                          // не то — динозавр качает головой
     c.el.classList.remove('no'); void c.el.offsetWidth; c.el.classList.add('no'); $('eater').classList.remove('nope'); void $('eater').offsetWidth; $('eater').classList.add('nope');
     HG.misses++; if (listen()) HG.earMiss++; want(); say(`Не то! Я хочу ${HG.target}`, 0.8); return;
@@ -433,7 +446,7 @@ function hungryWin() {
   $('hDoneText').textContent = `${HG.d.n} съел 10 слогов. ${pick(PRAISE)}` + (ear ? ' ⭐ Ты нашёл слоги на слух! +1 звезда в парк!' + built(nb) : ' Найди слоги на слух почти без ошибок — и получишь звезду для парка.'); $('hDone').hidden = false; say(`${HG.d.n} наелся! ${pick(PRAISE)}` + (ear ? ' Ты нашёл слоги на слух — звёздочка в парк!' : ''));
 }
 $('hungryBtn').onclick = hungry; $('hAgain').onclick = hungry;
-$('hSay').onclick = $('hWant').onclick = () => HG && say(HG.target, 0.7);
+$('hSay').onclick = $('hWant').onclick = () => { if (!HG) return; statHelp('Голодный динозавр'); say(HG.target, 0.7); };
 $('hBack').onclick = $('hHome').onclick = () => { speechSynthesis && speechSynthesis.cancel(); park(); };
 
 // ─── Профессор-путаник: 8 утверждений, половина — его ошибки. Прочитал сам (без 🔊) и ответил верно — звёздочка ───
@@ -460,7 +473,7 @@ function answer(saysTrue) {
   $('pScore').textContent = `Вопрос ${PQ.i + 1} из ${PQ.q.length} · ⭐ ${PQ.self}`;
   say(t + (self ? ' Звёздочка: ты прочитал сам!' : ''), 0.9);
 }
-$('pSay').onclick = () => { PQ.heard = true; say(PQ.q[PQ.i].text, 0.85); };
+$('pSay').onclick = () => { PQ.heard = true; statHelp('Профессор'); say(PQ.q[PQ.i].text, 0.85); };
 $('pYes').onclick = () => answer(true); $('pNo').onclick = () => answer(false);
 $('pNext').onclick = () => { if (++PQ.i < PQ.q.length) showQ(); else {
   $('pDoneTitle').textContent = `Ты поймал ${PQ.caught} ${plural(PQ.caught, 'ошибку', 'ошибки', 'ошибок')} профессора!`;
@@ -523,7 +536,7 @@ function story(i) {
   $('rAns').innerHTML = st.a.map((a, k) => ({ a, k })).sort(() => Math.random() - 0.5).map(x => `<button data-k="${x.k}">${esc(x.a)}</button>`).join('');
   $('rBox').scrollTop = 0; say('Прочитай историю. Если трудно — нажми на предложение, и я прочитаю.', 0.9);
 }
-$('rText').onclick = e => { const b = e.target.closest('.sent'); if (!b) return; ST.heard = true; document.querySelectorAll('.sent.on').forEach(x => x.classList.remove('on')); b.classList.add('on'); say(ST.st.t[+b.dataset.k], 0.85); };
+$('rText').onclick = e => { const b = e.target.closest('.sent'); if (!b) return; statHelp('Истории'); ST.heard = true; document.querySelectorAll('.sent.on').forEach(x => x.classList.remove('on')); b.classList.add('on'); say(ST.st.t[+b.dataset.k], 0.85); };
 $('rAns').onclick = e => {
   const b = e.target.closest('button'); if (!b || ST.done) return;
   if (+b.dataset.k !== 0) { b.classList.remove('no'); void b.offsetWidth; b.classList.add('no'); $('rFeed').textContent = 'Не то. Перечитай историю — ответ там!'; say('Не то. Перечитай историю — ответ там!', 0.9); return; }
@@ -565,7 +578,7 @@ $('wCards').onclick = e => {
   $('wFeedText').textContent = t; $('wNext').textContent = WG.i + 1 < WG.q.length ? 'Дальше ▶' : 'Ещё раз ▶'; $('wFeed').hidden = false;
   say(WG.q[WG.i].t + ' ' + t.replace(/[⭐🏗️]/gu, ''), 0.9);
 };
-$('wSay').onclick = () => { WG.heard = true; say(WG.q[WG.i].t, 0.85); };
+$('wSay').onclick = () => { WG.heard = true; statHelp('Собери фразу'); say(WG.q[WG.i].t, 0.85); };
 $('wNext').onclick = () => { if (++WG.i < WG.q.length) showW(); else wNew(); };
 $('sentBtn').onclick = sentOpen;
 $('wBack').onclick = () => { speechSynthesis && speechSynthesis.cancel(); park(); };
@@ -592,6 +605,51 @@ $('wdItems').onclick = e => {
 };
 $('wardBtn').onclick = wardOpen;
 $('wdBack').onclick = () => { speechSynthesis && speechSynthesis.cancel(); park(); };
+
+// ─── Дневник: «Сегодня я …» — варианты из событий дня (их надо прочитать), настроение; запись — раз в день звезда, завтра динозавр ответит ───
+let DY = null;
+const diary = () => jget('dp_diary', []);
+const dDate = s => { const [y, m, d] = s.split('-'); return `${+d}.${m}`; };
+function diaryOpen() {
+  audio(); DY = { what: '', mood: '' }; $('park').hidden = true; $('diary').hidden = false;
+  $('dyWhat').innerHTML = DL.diaryOpts(jget('dp_ev', []).filter(e => e.d === dk())).map(t => `<button>${t}</button>`).join('');
+  $('dyMood').innerHTML = DL.DIARY_MOOD.map(t => `<button>${t}</button>`).join(''); diaryDraw();
+  say('Дневник палеонтолога. Прочитай и выбери, что было сегодня.', 0.9);
+}
+function diaryDraw() {
+  $('dyLine').textContent = (DY.what ? `Сегодня я ${DY.what}.` : 'Сегодня я …') + (DY.mood ? ' ' + DY.mood : '');
+  [...$('dyWhat').children].forEach(b => b.classList.toggle('on', b.textContent === DY.what)); [...$('dyMood').children].forEach(b => b.classList.toggle('on', b.textContent === DY.mood));
+  $('dyOk').disabled = !(DY.what && DY.mood);
+  $('dyList').innerHTML = diary().slice(-10).reverse().map(e => `<div><b>${dDate(e.d)}</b> ${esc(e.text)}</div>`).join('') || '<div>Пока записей нет.</div>';
+}
+$('dyWhat').onclick = e => { const b = e.target.closest('button'); if (b) { DY.what = b.textContent; tone(660, 0, 0.2, 0.06); diaryDraw(); } };
+$('dyMood').onclick = e => { const b = e.target.closest('button'); if (b) { DY.mood = b.textContent; tone(660, 0, 0.2, 0.06); diaryDraw(); } };
+$('dyOk').onclick = () => {
+  if (!DY.what || !DY.mood) return; const text = `Сегодня я ${DY.what}. ${DY.mood}`, all = diary(); all.push({ d: dk(), text }); ls('dp_diary', JSON.stringify(all.slice(-60))); ls('dp_diaryNew', 1);
+  const first = ls('dp_diaryStar') !== dk(); if (first) ls('dp_diaryStar', dk()); const nb = first ? addStar() : null;
+  chime(); leaves(); toast(first ? '📔 Записано! +1 звезда в парк!' + built(nb) : '📔 Записано!', 3200); say(text + ' Записано! Завтра динозавры прочитают.', 0.9);
+  DY = { what: '', mood: '' }; diaryDraw();
+};
+$('diaryBtn').onclick = diaryOpen;
+$('dyBack').onclick = () => { speechSynthesis && speechSynthesis.cancel(); park(); };
+
+// ─── Отчёт для взрослых (за примером): как читает за неделю, трудные слоги, где просит подсказку ───
+function reportOpen() {
+  const s = stGet(), nm = name() || 'ребёнок', days = [];
+  for (let i = 6; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    days.push({ k, w: ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'][d.getDay()], ...(s.days[k] || { self: 0, help: 0 }) }); }
+  const mx = Math.max(1, ...days.map(d => d.self + d.help)), hard = DL.hardSyl(s.syl), conf = Object.entries(s.conf).sort((a, b) => b[1] - a[1]).slice(0, 5), hint = Object.entries(s.hint).sort((a, b) => b[1] - a[1]);
+  $('rpBody').innerHTML = `<h3>За 7 дней</h3><div class="rpDays">${days.map(d => `<div><i style="height:${d.self / mx * 70}px" class="s"></i><i style="height:${d.help / mx * 70}px" class="h"></i><small>${d.w}<br>${dDate(d.k)}</small></div>`).join('')}</div>
+    <p class="rpLeg"><span class="s"></span> прочитал сам (звёзды) · <span class="h"></span> нажимал 🔊</p>
+    <h3>Трудные слоги</h3>${hard.length ? '<ul>' + hard.map(x => `<li><b>${x.s}</b> — ошибок ${x.miss} из ${x.n}</li>`).join('') + '</ul><p>Эти слоги теперь чаще попадаются в «Голодном динозавре».</p>' : '<p>Пока мало данных (нужно хотя бы 3 попытки на слог).</p>'}
+    ${conf.length ? '<h3>Путает</h3><ul>' + conf.map(([k, n]) => `<li>нужно <b>${k.split('→')[0]}</b>, нажал <b>${k.split('→')[1]}</b> — ${n} ${plural(n, 'раз', 'раза', 'раз')}</li>`).join('') + '</ul>' : ''}
+    <h3>Где просит подсказку 🔊</h3>${hint.length ? '<ul>' + hint.map(([g, n]) => `<li>${g} — ${n}</li>`).join('') + '</ul>' : '<p>Подсказки не нажимал.</p>'}
+    <h3>Всего</h3><p>Видов найдено: ${found} из ${DINOS.length} · звёзд: ${stars} · находок в музее: ${finds().length} · тренировок по самбо: ${train} · записей в дневнике: ${diary().length}</p>
+    <p class="rpNote">Статистика ведётся с версии dp-v26 и хранится только на этом телефоне.</p>`;
+  $('rpTitle').textContent = `📊 Как читает ${nm}`; $('gamesSheet').hidden = true; $('park').hidden = true; $('report').hidden = false;
+}
+$('reportBtn').onclick = () => { audio(); gateAsk('Посмотреть, как читает ребёнок.', 'Открыть', reportOpen); };
+$('rpBack').onclick = () => park();
 
 // ─── первый запуск: имя (хранится только на телефоне) ───
 $('nameOk').onclick = () => { const n = $('nameIn').value.trim().slice(0, 14); ls('dp_name', n); $('hi').hidden = true; audio(); park(); say(`Привет${n ? ', ' + n : ''}! Ты палеонтолог. Пойдём на раскопки!`); };

@@ -93,4 +93,11 @@ assert(DL.letter({ t: 'find', id: 'paw' }, c0).lines.join(' ').includes('наш�
 assert(DL.TALES.every(t => t.length === 6 && t.every(x => x.length < 45))); assert(DL.isNight(21) && DL.isNight(3) && !DL.isNight(7) && !DL.isNight(19));
 assert(DL.compare(DD.DINOS.find(d => d.id === 'giganto'), 120).text.includes('ростом') && DL.compare(DD.DINOS.find(d => d.id === 'giganto'), 120).text.includes('на плечи'), 'рост гигантопитека');
 assert(require('fs').existsSync(__dirname + '/ice.jpg') && require('fs').readFileSync(__dirname + '/sw.js', 'utf8').includes("'ice.jpg'"), 'фон Ледника есть и в кэше');
+// дневник: события дня — первыми, падежи; письмо-ответ на дневник; трудные слоги
+assert.strictEqual(DL.acc('Мегатерий'), 'мегатерия'); assert.strictEqual(DL.acc('Мамонт'), 'мамонта');
+const dop = DL.diaryOpts([{ t: 'train' }, { t: 'new', id: 'elasmo' }, { t: 'find', id: 'paw' }]);
+assert.deepStrictEqual(dop.slice(0, 3), ['ходил на самбо', 'нашёл эласмотерия', 'нашёл лапу']); assert.strictEqual(dop.length, 5);
+assert.strictEqual(DL.diaryOpts([]).length, 5);
+assert(DL.letter({ t: 'diary', text: 'Сегодня я ходил на самбо.' }, c0).lines.join(' ').includes('«Сегодня я ходил на самбо.»'), 'письмо на дневник');
+assert.deepStrictEqual(DL.hardSyl({ ЦЕ: { ok: 2, miss: 4 }, МА: { ok: 9, miss: 1 }, ЖИ: { ok: 0, miss: 2 }, РО: { ok: 5 } }).map(x => x.s), ['ЦЕ', 'МА'], 'трудные: от 3 попыток, по доле ошибок');
 console.log('ВСЁ ОК');

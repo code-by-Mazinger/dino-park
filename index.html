@@ -104,6 +104,17 @@ button{font:inherit;color:inherit;cursor:pointer;border:0}
 .ans:active{transform:translateY(4px)}
 #pFeed{margin-top:auto;padding:14px;border-radius:22px;background:rgba(255,250,240,.96);text-align:center}
 #pFeed[hidden]{display:none}
+#dyBox{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top) + 70px);bottom:0;overflow-y:auto;padding:0 14px calc(env(safe-area-inset-bottom) + 16px);z-index:3}
+#dyLine{font-size:clamp(22px,6.4vw,28px);font-weight:900;line-height:1.3;min-height:2.6em}
+.dyH{margin:14px 0 6px;font-weight:900;font-size:18px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+#dyWhat,#dyMood{display:flex;flex-wrap:wrap;gap:8px}#dyWhat button,#dyMood button{padding:10px 12px;border-radius:16px;background:#fffaf0;font-weight:800;font-size:18px;box-shadow:0 4px 0 #d8c7a6}
+#dyWhat button.on,#dyMood button.on{background:#bff0c5;box-shadow:0 4px 0 #6bbf74}#dyOk{display:block;margin:16px auto 0}#dyOk:disabled{opacity:.5}
+#dyList{display:flex;flex-direction:column;gap:6px}#dyList div{padding:8px 10px;border-radius:12px;background:rgba(255,250,240,.92);font-weight:700;font-size:16px}
+#report{background:#f6f1e6;overflow-y:auto}#rpBox{padding:calc(env(safe-area-inset-top) + 10px) 16px calc(env(safe-area-inset-bottom) + 20px);max-width:560px;margin:0 auto}
+#rpHead{display:flex;align-items:center;gap:12px}#rpHead h2{margin:0;font-size:22px}#rpBody h3{margin:18px 0 6px;font-size:18px}#rpBody p,#rpBody li{font-size:16px;line-height:1.4}
+.rpDays{display:flex;gap:6px;align-items:flex-end;height:110px}.rpDays div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:1px}
+.rpDays i{width:70%;border-radius:4px 4px 0 0;display:block}.rpDays small{font-size:11px;text-align:center;color:#6b5a48;margin-top:3px}
+i.s,span.s{background:#3cb043}i.h,span.h{background:#ffb347}.rpLeg span{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px}.rpNote{color:#8a7a66;font-size:13px!important}
 #mailBtn{position:absolute;right:10px;top:calc(env(safe-area-inset-top) + 10px);z-index:31}
 #mailBtn.new{animation:wob 1.6s ease-in-out infinite}#mailBtn.new::after{content:"";position:absolute;right:4px;top:4px;width:12px;height:12px;border-radius:50%;background:#ff3b30;border:2px solid #fff}
 #mlPic{height:110px;display:flex;align-items:flex-end;justify-content:center;font-size:72px;background:linear-gradient(#fff3d6,#e9f7d8);border-radius:20px}#mlPic img{max-height:100px;width:auto;max-width:80%}
@@ -332,6 +343,19 @@ h2{margin:6px 0;font-size:26px}
     <div id="wFeed" hidden><div id="wFeedText"></div><button class="go" id="wNext">Дальше ▶</button></div>
   </div>
 </div>
+<div class="scr game" id="diary" hidden>
+  <div class="gtop"><button class="round" id="dyBack" aria-label="В парк">🌴</button><div class="gpill">📔 Дневник</div><div style="width:48px"></div></div>
+  <div id="dyBox">
+    <div class="bubble"><div id="dyLine"></div></div>
+    <p class="dyH">Что было сегодня?</p><div id="dyWhat"></div>
+    <p class="dyH">Какое настроение?</p><div id="dyMood"></div>
+    <button class="go" id="dyOk">✏️ Записать</button>
+    <p class="dyH">Мои записи</p><div id="dyList"></div>
+  </div>
+</div>
+<div class="scr" id="report" hidden>
+  <div id="rpBox"><div id="rpHead"><button class="round" id="rpBack" aria-label="В парк">🌴</button><h2 id="rpTitle"></h2></div><div id="rpBody"></div></div>
+</div>
 <div class="scr game" id="moves" hidden>
   <div class="gtop"><button class="round" id="mvBack" aria-label="В парк">🌴</button><div class="gpill" id="mvTitle"></div><div style="width:48px"></div></div>
   <div id="mvList"></div>
@@ -367,8 +391,10 @@ h2{margin:6px 0;font-size:26px}
     <button class="gtile" id="wardBtn"><b>👕</b>Гардероб<small>наряди палеонтолога</small></button>
     <button class="gtile" id="musBtn"><b>🏛️</b>Музей находок<small>что нашёл на раскопках</small></button>
     <button class="gtile" id="movesBtn"><b>🥋</b>Приёмы самбо<small>что разучил на тренировках</small></button>
+    <button class="gtile" id="diaryBtn"><b>📔</b>Дневник<small>как прошёл день</small></button>
   </div>
   <button class="go" id="gamesClose">Назад</button>
+  <p><button class="link" id="reportBtn">📊 Для взрослых: как читает ребёнок</button></p>
 </div></div>
 
 <div class="scr game" id="size" hidden>
@@ -412,7 +438,7 @@ h2{margin:6px 0;font-size:26px}
 <div class="ovl" id="gate" hidden><div class="card">
   <div style="font-size:40px">🥋</div>
   <h2>Для взрослых</h2>
-  <p style="font-size:18px;font-weight:700">Отметить тренировку по самбо. Сколько будет <span id="gQ"></span>?</p>
+  <p style="font-size:18px;font-weight:700"><span id="gT">Отметить тренировку по самбо.</span> Сколько будет <span id="gQ"></span>?</p>
   <input class="fld" id="gIn" type="number" inputmode="numeric" autocomplete="off">
   <div id="gErr" style="color:#c0392b;font-weight:800;min-height:22px"></div>
   <div style="display:flex;gap:10px;justify-content:center"><button class="go" id="gOk">Отметить</button><button class="go" id="gNo" style="background:linear-gradient(#cfc4b2,#a99c86);box-shadow:0 6px 0 #857a66">Отмена</button></div>

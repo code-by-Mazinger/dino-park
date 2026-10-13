@@ -67,6 +67,7 @@ function sents(found, k, r = Math.random) {
 // Письма от динозавров: раз в день, по последнему событию (тренировка с приёмом, вылупление, находка, новый вид, золото); событий нет — факт от найденного.
 // ev: {t: 'train'|'hatch'|'find'|'new'|'gold', id, m}; c: {name, found, babies}. Вопрос — кто написал (картинку показываем после ответа).
 const gen = n => n.toLowerCase() + 'а';                                             // тираннозавр → тираннозавра (у малышей все имена на согласный)
+const acc = n => { const l = n.toLowerCase(); return l.endsWith('ий') ? l.slice(0, -1) + 'я' : l + 'а'; };   // нашёл (кого?) мамонта, мегатерия
 const ACC = { paw: 'лапу', shell: 'ракушку' };
 function letter(ev, c, r = Math.random) {
   const D = DD.DINOS, got = D.slice(0, Math.max(1, c.found)), pk = a => a[Math.floor(r() * a.length)], N = c.name || 'палеонтолог', by = id => D.find(d => d.id === id);
@@ -77,6 +78,8 @@ function letter(ev, c, r = Math.random) {
     lines = [`Привет, ${N}!`, `Это я, малыш ${gen(d.n)}.`, 'Я вылупился, потому что ты ходил на самбо.', 'Спасибо тебе!', 'Я уже умею бегать.']; }
   else if (ev && ev.t === 'find' && DD.FINDS.some(f => f.id === ev.id)) { const f = DD.FINDS.find(x => x.id === ev.id), d = pk(got); from = d.id;
     lines = [`Привет, ${N}!`, `Это ${d.n}.`, `Я видел, как ты нашёл ${ACC[f.id] || f.w.toLowerCase()}.`, 'Это настоящая находка для музея!', 'Что ты найдёшь завтра?']; }
+  else if (ev && ev.t === 'diary' && ev.text) { const d = pk(got); from = d.id;
+    lines = [`Привет, ${N}!`, `Это ${d.n}.`, 'Я прочитал твой дневник.', `Ты написал: «${ev.text}»`, pk(['Здорово! Расскажи ещё!', 'Я тоже так хочу!', 'Ты молодец!'])]; }
   else if (ev && (ev.t === 'new' || ev.t === 'gold') && by(ev.id)) { const d = by(ev.id); from = d.id;
     lines = ev.t === 'new' ? [`Привет, ${N}!`, `Я ${d.n}.`, 'Ты нашёл меня на раскопках.', 'Теперь я живу в твоём парке.', d.facts[0]]
       : [`Привет, ${N}!`, `Это ${d.n}.`, 'Ты прочитал моё имя сам.', 'Теперь я золотой!', 'Спасибо!']; }
@@ -95,6 +98,23 @@ const TALES = [
   ['Сегодня была тренировка.', 'Малыши учились падать и вставать.', 'Они очень устали.', 'Мама укрыла их листьями.', 'Завтра будет новый день.', 'А сейчас — спать.'],
   ['В бухте тихо плещет вода.', 'Мозазавр плывёт к берегу.', 'Луна светит на воду.', 'Мозазавр закрывает глаза.', 'Волны качают его, как колыбель.', 'Спокойной ночи, мозазавр!'],
 ];
-const isNight = h => h >= 20 || h < 7;                                               // по часам телефона
-globalThis.DL = { rng, tiles, extra, belt, babies, cracks, gate, BELTS, pool, prof, compare, build, STEP, sents, grow, ftiles, nextBaby, BABIES, letter, TALES, isNight };
+const isNight = h => h >= 20 || h < 7;
+// Дневник: что было сегодня (события дня) — первыми, потом обычные дела
+const DIARY_ANY = ['играл с динозаврами', 'читал книжку', 'гулял на улице', 'ходил в школу', 'помогал маме'];
+const DIARY_MOOD = ['Мне было весело.', 'Было интересно.', 'Я устал.', 'Я молодец!'];
+function diaryOpts(evs) {
+  const by = id => DD.DINOS.find(d => d.id === id), out = [];
+  for (const e of evs) {
+    const t = e.t === 'train' ? 'ходил на самбо' : e.t === 'new' && by(e.id) ? `нашёл ${acc(by(e.id).n)}` : e.t === 'find' && DD.FINDS.some(f => f.id === e.id) ? `нашёл ${ACC[e.id] || DD.FINDS.find(f => f.id === e.id).w.toLowerCase()}`
+      : e.t === 'hatch' ? 'видел, как вылупился малыш' : e.t === 'gold' ? 'собрал золотое имя' : e.t === 'tale' ? 'читал сказку динозаврам' : e.t === 'mail' ? 'читал письмо от динозавра' : '';
+    if (t && !out.includes(t)) out.push(t);
+  }
+  return [...out.slice(-3), ...DIARY_ANY].slice(0, 5);
+}
+// Отчёт для взрослых: трудные слоги — где чаще ошибается (не меньше n попыток), по доле ошибок
+function hardSyl(st, n = 3, k = 5) {
+  return Object.entries(st || {}).map(([s, v]) => ({ s, miss: v.miss || 0, n: (v.ok || 0) + (v.miss || 0) })).filter(x => x.n >= n && x.miss > 0)
+    .sort((a, b) => b.miss / b.n - a.miss / a.n || b.miss - a.miss).slice(0, k);
+}                                               // по часам телефона
+globalThis.DL = { rng, tiles, extra, belt, babies, cracks, gate, BELTS, pool, prof, compare, build, STEP, sents, grow, ftiles, nextBaby, BABIES, letter, TALES, isNight, diaryOpts, DIARY_MOOD, hardSyl, acc };
 })();
