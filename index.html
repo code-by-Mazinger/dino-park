@@ -162,6 +162,10 @@ i.s,span.s{background:#3cb043}i.h,span.h{background:#ffb347}.rpLeg span{display:
   background-image:radial-gradient(3px 3px at 20px 30px,#fff 50%,transparent 51%),radial-gradient(2px 2px at 80px 120px,#fff 50%,transparent 51%),radial-gradient(3px 3px at 150px 60px,#fff 50%,transparent 51%),radial-gradient(2px 2px at 220px 160px,#fff 50%,transparent 51%);
   background-size:260px 200px;animation:snow 9s linear infinite}
 #park.v3 #snow{display:block}@keyframes snow{to{background-position:40px 200px,-30px 200px,20px 200px,-10px 200px}}
+.pd.deep img{animation:bob 2.6s ease-in-out infinite alternate}
+#bubbles{display:none;position:absolute;inset:0;z-index:19;pointer-events:none;background-image:radial-gradient(circle at 30% 30%,rgba(255,255,255,.9) 0 2px,rgba(255,255,255,.25) 3px 5px,transparent 6px),radial-gradient(circle,rgba(255,255,255,.7) 0 2px,transparent 4px);
+  background-size:180px 260px,120px 200px;animation:bub 7s linear infinite}#park.v4 #bubbles{display:block}@keyframes bub{to{background-position:20px -260px,-15px -200px}}
+#dig.sea::before{content:"";position:absolute;inset:0;background:rgba(30,110,170,.42);pointer-events:none;z-index:0}
 #dig.ice::before{content:"";position:absolute;inset:0;background:rgba(210,232,255,.45);pointer-events:none;z-index:0}
 #guessEgg{width:120px;margin:0 auto}#guessEgg svg{width:100%;height:auto;display:block}
 #guessOpts{display:flex;flex-direction:column;gap:8px;margin:10px 0}
@@ -298,7 +302,7 @@ h2{margin:6px 0;font-size:26px}
 <div class="scr" id="park">
   <img id="bg" src="park.jpg" alt="">
   <button id="pvPrev" class="pvb" hidden></button><button id="pvNext" class="pvb" hidden></button>
-  <div id="snow"></div>
+  <div id="snow"></div><div id="bubbles"></div>
   <div id="night"><i class="moon">🌙</i><b></b><b></b><b></b><b></b><b></b><b></b></div>
   <button id="mailBtn" class="round" aria-label="Письмо" hidden>📬</button>
   <button id="taleBtn" hidden>🌙 Сказка на ночь</button>
