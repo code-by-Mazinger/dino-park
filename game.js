@@ -105,7 +105,6 @@ function park(fresh = -1) {
   $('stars').textContent = B.next ? `⭐ ${stars} · ещё ${B.left} до ${B.next[0]}` : `⭐ ${stars} · парк построен 🏆`;
   DD.BUILDS.slice(0, pv ? 0 : B.n).forEach(([, n, id], i) => { const el = document.createElement('div'); el.className = 'bd' + (i > 3 ? ' far' : '') + (i === newB ? ' new' : ''); el.innerHTML = `<img src="builds/${id}.webp" alt="${n}" draggable="false">`; el.style.width = k * (i > 3 ? 0.17 : 0.22) + 'px';
     el.style.left = BX[i] * 100 + '%'; el.style.bottom = H * (i > 3 ? 0.405 : 0.345) + 'px'; el.onclick = id === 'museum' ? museum : () => say(n, 0.9); box.appendChild(el); });
-  if (night() && ls('dp_tale') === nightKey()) sleepAll();
   if (newB >= 0) { const n = DD.BUILDS[newB][1]; newB = -1; setTimeout(() => { leaves(); say('В парке новая постройка: ' + n + '!', 0.9); }, 500); }
 }
 // ─── Письма от динозавров: раз в день, по последнему событию; прочитал сам и угадал, кто написал, — звезда ───
@@ -137,14 +136,12 @@ $('mailBtn').onclick = mailOpen;
 $('mlClose').onclick = () => { $('mail').hidden = true; speechSynthesis && speechSynthesis.cancel(); };
 
 // ─── Ночь по часам телефона (с 20 до 7): темно, светлячки; «Сказка на ночь» — прочитал предложение, малыш уснул ───
-const nightKey = () => { const d = new Date(); if (d.getHours() < 7) d.setDate(d.getDate() - 1); return d.toDateString(); };
-const night = () => !/[?&]day/.test(location.search) && (DL.isNight(new Date().getHours()) || /[?&]night/.test(location.search));   // ?night / ?day — для проверки
-function nightSet() { const n = night(); $('park').classList.toggle('night', n); $('taleBtn').hidden = !n || ls('dp_tale') === nightKey(); }
+function nightSet() { $('park').classList.remove('night'); $('taleBtn').hidden = true; }   // ночь по часам убрана (решение Георгия 2026-10-14); сказка — в меню «Игры»
 function sleepAll() { walkers.forEach(a => { a.rest = 1e9; a.el.classList.add('sleep'); }); }
 let TL = null;
 function taleOpen() {
   audio(); const n = +ls('dp_taleN') || 0; TL = { t: DL.TALES[n % DL.TALES.length], i: 0, heard: false };
-  $('taleBtn').hidden = true; $('tale').hidden = false; taleShow(); say('Сказка на ночь. Читай малышам по одному предложению — и они уснут.', 0.85);
+  $('taleBtn').hidden = true; $('tale').hidden = false; taleShow(); say('Сказка для малышей. Читай им по одному предложению — и они уснут.', 0.85);
 }
 function taleShow() { $('tlText').textContent = TL.t[TL.i]; $('tlCount').textContent = `💤 ${TL.i} из ${TL.t.length}`; $('tlNext').textContent = 'Прочитал ▶'; }
 $('tlSay').onclick = () => { if (!TL) return; TL.heard = true; statHelp('Сказка'); say(TL.t[TL.i], 0.8); };
@@ -153,11 +150,13 @@ $('tlNext').onclick = () => {
   const awake = walkers.filter(a => !a.el.classList.contains('sleep')).sort(() => Math.random() - 0.5);   // засыпают поровну на каждое предложение
   awake.slice(0, Math.ceil(awake.length / (TL.t.length - TL.i))).forEach(a => { a.rest = 1e9; a.el.classList.add('sleep'); });
   if (++TL.i < TL.t.length) { tone(392, 0, 0.5, 0.05); return taleShow(); }
-  sleepAll(); TL.done = true; ls('dp_tale', nightKey()); logEv({ t: 'tale' }); ls('dp_taleN', (+ls('dp_taleN') || 0) + 1);
-  const self = !TL.heard, t = `Все уснули. Спокойной ночи${name() ? ', ' + name() : ''}!` + (self ? ' ⭐ Ты прочитал сказку сам! +1 звезда в парк!' + built(addStar()) : '');
+  sleepAll(); TL.done = true; logEv({ t: 'tale' }); ls('dp_taleN', (+ls('dp_taleN') || 0) + 1);
+  const self = !TL.heard && ls('dp_taleStar') !== dk(); if (self) ls('dp_taleStar', dk());   // звезда за сказку — раз в день
+  const t = `Все уснули. Сладких снов, малыши!` + (self ? ' ⭐ Ты прочитал сказку сам! +1 звезда в парк!' + built(addStar()) : '');
   $('tlText').textContent = t; $('tlCount').textContent = `💤 ${TL.t.length} из ${TL.t.length}`; $('tlNext').textContent = 'Закрыть'; say(t.replace('⭐ ', ''), 0.8);
 };
 $('taleBtn').onclick = taleOpen;
+$('taleTile').onclick = () => { $('gamesSheet').hidden = true; taleOpen(); };
 
 const PV_SAY = ['Парк.', 'Долина экспедиции. Здесь живут находки второй экспедиции.', 'Ледник. Здесь живут звери ледникового периода.'];
 $('pvPrev').onclick = () => { pv--; park(); say(PV_SAY[pv], 0.9); };
