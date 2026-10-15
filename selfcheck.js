@@ -23,7 +23,8 @@ assert(DINOS.slice(0, 5).every(d => d.syl.length <= 4) && DINOS.slice(12, 15).ev
 DINOS.slice(16, 25).forEach((d, i) => assert(d.syl.length >= DINOS[15 + i].syl.length, d.n + ': имена от коротких к длинным'));
 DINOS.slice(26, 35).forEach((d, i) => assert(d.syl.length >= DINOS[25 + i].syl.length, d.n + ': звери ледника — от коротких к длинным'));
 DINOS.slice(36, 45).forEach((d, i) => assert(d.syl.length >= DINOS[35 + i].syl.length, d.n + ': морские — от коротких к длинным'));
-DINOS.filter(d => d.swim || d.fly || d.period === 'ледниковый').forEach(d => assert(/не динозавр/.test(d.kind), d.n + ': пометка «не динозавр»'));
+DINOS.slice(46).forEach((d, i) => assert(d.syl.length >= DINOS[45 + i].syl.length, d.n + ': пермские — от коротких к длинным'));
+DINOS.filter(d => d.swim || d.fly || ['ледниковый', 'пермский', 'девонский', 'палеоген', 'неоген'].includes(d.period)).forEach(d => assert(/не динозавр/.test(d.kind), d.n + ': пометка «не динозавр»'));
 // самбо: пояс, трещины, малыши
 assert.strictEqual(DL.belt(0).name, 'белый'); assert.strictEqual(DL.belt(2).left, 1); assert.strictEqual(DL.belt(3).name, 'жёлтый');
 assert.strictEqual(DL.belt(29).name, 'коричневый'); assert.strictEqual(DL.belt(30).name, 'чёрный'); assert.strictEqual(DL.belt(99).left, 0);
@@ -93,10 +94,11 @@ assert(DL.letter({ t: 'find', id: 'paw' }, c0).lines.join(' ').includes('наш�
 // сказки: по 6 коротких предложений; ночь — с 20 до 7
 assert(DL.TALES.every(t => t.length === 6 && t.every(x => x.length < 45))); assert(DL.isNight(21) && DL.isNight(3) && !DL.isNight(7) && !DL.isNight(19));
 assert(DL.compare(DD.DINOS.find(d => d.id === 'giganto'), 120).text.includes('ростом') && DL.compare(DD.DINOS.find(d => d.id === 'giganto'), 120).text.includes('на плечи'), 'рост гигантопитека');
+for (const f of ['perm.jpg', 'valley.jpg']) assert(require('fs').existsSync(__dirname + '/' + f) && require('fs').readFileSync(__dirname + '/sw.js', 'utf8').includes(`'${f}'`), f + ': фон есть и в кэше');
 assert(require('fs').existsSync(__dirname + '/sea.jpg') && require('fs').readFileSync(__dirname + '/sw.js', 'utf8').includes("'sea.jpg'"), 'фон Глубин есть и в кэше');
 assert(require('fs').existsSync(__dirname + '/ice.jpg') && require('fs').readFileSync(__dirname + '/sw.js', 'utf8').includes("'ice.jpg'"), 'фон Ледника есть и в кэше');
 // дневник: события дня — первыми, падежи; письмо-ответ на дневник; трудные слоги
-assert.strictEqual(DL.acc('Мегатерий'), 'мегатерия'); assert.strictEqual(DL.acc('Мамонт'), 'мамонта');
+assert.strictEqual(DL.acc('Мегатерий'), 'мегатерия'); assert.strictEqual(DL.acc('Иностранцевия'), 'иностранцевию'); assert.strictEqual(DL.acc('Мамонт'), 'мамонта');
 const dop = DL.diaryOpts([{ t: 'train' }, { t: 'new', id: 'elasmo' }, { t: 'find', id: 'paw' }]);
 assert.deepStrictEqual(dop.slice(0, 3), ['ходил на самбо', 'нашёл эласмотерия', 'нашёл лапу']); assert.strictEqual(dop.length, 5);
 assert.strictEqual(DL.diaryOpts([]).length, 5);

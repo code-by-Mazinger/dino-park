@@ -67,7 +67,7 @@ function sents(found, k, r = Math.random) {
 // Письма от динозавров: раз в день, по последнему событию (тренировка с приёмом, вылупление, находка, новый вид, золото); событий нет — факт от найденного.
 // ev: {t: 'train'|'hatch'|'find'|'new'|'gold', id, m}; c: {name, found, babies}. Вопрос — кто написал (картинку показываем после ответа).
 const gen = n => n.toLowerCase() + 'а';                                             // тираннозавр → тираннозавра (у малышей все имена на согласный)
-const acc = n => { const l = n.toLowerCase(); return l.endsWith('ий') ? l.slice(0, -1) + 'я' : l + 'а'; };   // нашёл (кого?) мамонта, мегатерия
+const acc = n => { const l = n.toLowerCase(); return l.endsWith('ий') ? l.slice(0, -1) + 'я' : l.endsWith('ия') ? l.slice(0, -1) + 'ю' : l + 'а'; };   // мамонта, мегатерия, иностранцевию   // нашёл (кого?) мамонта, мегатерия
 const ACC = { paw: 'лапу', shell: 'ракушку' };
 function letter(ev, c, r = Math.random) {
   const D = DD.DINOS, got = D.slice(0, Math.max(1, c.found)), pk = a => a[Math.floor(r() * a.length)], N = c.name || 'палеонтолог', by = id => D.find(d => d.id === id);

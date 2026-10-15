@@ -155,8 +155,7 @@ i.s,span.s{background:#3cb043}i.h,span.h{background:#ffb347}.rpLeg span{display:
 #mvList{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top) + 70px);bottom:0;overflow-y:auto;padding:0 12px calc(env(safe-area-inset-bottom) + 14px);display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:start;z-index:3}
 #mvList button{padding:14px 6px;border-radius:18px;background:#fffaf0;box-shadow:0 4px 0 #d8c7a6;display:flex;flex-direction:column;align-items:center;gap:4px}
 #mvList button b{font-size:18px;line-height:1.15}#mvList button small{font-size:13px;color:#8a6d3b}#mvList button.no{opacity:.55}
-#park.v2 #bg{transform:scaleX(-1);filter:hue-rotate(-18deg) saturate(1.15) brightness(.97)}   /* Долина — временный фон: зеркальный парк, пока нет своей картинки */
-.pvb{position:absolute;top:44%;z-index:30;padding:10px 14px;border-radius:999px;background:rgba(255,255,255,.9);font-weight:900;font-size:17px;box-shadow:0 4px 0 rgba(0,0,0,.2)}
+.pvb{position:absolute;top:34%;z-index:30;padding:10px 14px;border-radius:999px;background:rgba(255,255,255,.9);font-weight:900;font-size:17px;box-shadow:0 4px 0 rgba(0,0,0,.2)}
 #pvNext{right:8px}#pvPrev{left:8px}
 #snow{display:none;position:absolute;inset:0;z-index:19;pointer-events:none;
   background-image:radial-gradient(3px 3px at 20px 30px,#fff 50%,transparent 51%),radial-gradient(2px 2px at 80px 120px,#fff 50%,transparent 51%),radial-gradient(3px 3px at 150px 60px,#fff 50%,transparent 51%),radial-gradient(2px 2px at 220px 160px,#fff 50%,transparent 51%);
@@ -165,6 +164,7 @@ i.s,span.s{background:#3cb043}i.h,span.h{background:#ffb347}.rpLeg span{display:
 .pd.deep img{animation:bob 2.6s ease-in-out infinite alternate}
 #bubbles{display:none;position:absolute;inset:0;z-index:19;pointer-events:none;background-image:radial-gradient(circle at 30% 30%,rgba(255,255,255,.9) 0 2px,rgba(255,255,255,.25) 3px 5px,transparent 6px),radial-gradient(circle,rgba(255,255,255,.7) 0 2px,transparent 4px);
   background-size:180px 260px,120px 200px;animation:bub 7s linear infinite}#park.v4 #bubbles{display:block}@keyframes bub{to{background-position:20px -260px,-15px -200px}}
+#dig.perm::before{content:"";position:absolute;inset:0;background:rgba(190,80,30,.28);pointer-events:none;z-index:0}
 #dig.sea::before{content:"";position:absolute;inset:0;background:rgba(30,110,170,.42);pointer-events:none;z-index:0}
 #dig.ice::before{content:"";position:absolute;inset:0;background:rgba(210,232,255,.45);pointer-events:none;z-index:0}
 #guessEgg{width:120px;margin:0 auto}#guessEgg svg{width:100%;height:auto;display:block}
